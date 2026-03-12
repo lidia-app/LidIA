@@ -23,7 +23,7 @@ jobs:
       - name: Check Swift tools version
         run: |
           REQUIRED="6.2"
-          INSTALLED=$(swift --version 2>&1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
+          INSTALLED=$(swift --version 2>&1 | grep -oE 'Swift version [0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+')
           echo "Required: $REQUIRED, Installed: $INSTALLED"
           if [ "$(printf '%s\n' "$REQUIRED" "$INSTALLED" | sort -V | head -1)" != "$REQUIRED" ]; then
             echo "::warning::Swift $REQUIRED required but $INSTALLED installed. Skipping build until macOS 26 runners are available."
