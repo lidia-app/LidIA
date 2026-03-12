@@ -11,7 +11,7 @@
     <stop offset="100%" stop-color="#7FE7FF"/>
   </linearGradient>
   <filter id="shadow" x="90" y="150" width="860" height="700" filterUnits="userSpaceOnUse">
-    <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#06102A" flood-opacity="0.30"/>
+    <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#06102A" flood-opacity="0.25"/>
   </filter>
 </defs>
 <rect x="70" y="70" width="884" height="884" rx="190" fill="url(#bgGrad)"/>

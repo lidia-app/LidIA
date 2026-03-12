@@ -49,5 +49,7 @@
 	<string>LidIA needs calendar access to show your upcoming meetings and auto-associate recordings with calendar events.</string>
 	<key>NSRemindersUsageDescription</key>
 	<string>LidIA creates reminders for action items extracted from your meetings.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 </dict>
 </plist>
