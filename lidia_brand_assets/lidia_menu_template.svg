@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="512" viewBox="0 0 1024 512" fill="none">
+<g transform="translate(85,-70) scale(0.74)">
+  <path d="M 150 520 C 205 520, 225 500, 255 430 C 275 385, 300 365, 320 450 C 338 530, 360 620, 400 620 C 445 620, 465 540, 485 360 C 495 275, 515 210, 545 210 C 580 210, 595 310, 595 455 C 595 620, 612 730, 655 730 C 700 730, 712 650, 725 585 C 735 540, 752 520, 785 520" stroke="black" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="735" y1="365" x2="900" y2="365" stroke="black" stroke-width="56" stroke-linecap="round"/>
+<line x1="735" y1="470" x2="900" y2="470" stroke="black" stroke-width="56" stroke-linecap="round"/>
+<line x1="735" y1="575" x2="860" y2="575" stroke="black" stroke-width="56" stroke-linecap="round"/>
+</g>
+</svg>

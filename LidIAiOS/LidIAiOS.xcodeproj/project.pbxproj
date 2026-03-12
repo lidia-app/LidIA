@@ -1,0 +1,386 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0F4AB22E740B39FACA7C9152 /* iOSChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80CCE51AAB19414130561F61 /* iOSChatView.swift */; };
+		12A37A85E0E35F97D4441C94 /* LidIAiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB005D9B8F99BDA0C84B2AF2 /* LidIAiOSApp.swift */; };
+		146D488C7B6EC00A305BE767 /* VoiceModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA39D2A0B30B4AEFF6A813B /* VoiceModeView.swift */; };
+		19431215EC200D4AB6A41B27 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA6B8F4E4BA0BCD167321875 /* Assets.xcassets */; };
+		47CA95A57DCB25B6C6D83D09 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8614E043CDF93B4A281968BE /* DashboardView.swift */; };
+		915AB69B1A3DB08D15F01E07 /* iOSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF7FE3427846372723EFE8A /* iOSSettingsView.swift */; };
+		C37396A489DC38953FAFB425 /* iOSSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB8CB3FA44A6D76EBE5F076 /* iOSSettings.swift */; };
+		E047DD7384ABB74077CB4F93 /* iOSRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5562579CC4FBB49848A2BA /* iOSRootView.swift */; };
+		E124502CAC2B2DE336FF3EFB /* MeetingDetailiOSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEA2E187FF25153A497A19E /* MeetingDetailiOSView.swift */; };
+		E718CF24F3BFDAB659BE0555 /* LidIAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4B5631ADBD3C054EFE047698 /* LidIAKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		3A51A6AF7E20BE7198D67807 /* LidIAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = LidIAKit; path = ../Packages/LidIAKit; sourceTree = SOURCE_ROOT; };
+		4EA39D2A0B30B4AEFF6A813B /* VoiceModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceModeView.swift; sourceTree = "<group>"; };
+		5FF7FE3427846372723EFE8A /* iOSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettingsView.swift; sourceTree = "<group>"; };
+		6FB8CB3FA44A6D76EBE5F076 /* iOSSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettings.swift; sourceTree = "<group>"; };
+		7D5562579CC4FBB49848A2BA /* iOSRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSRootView.swift; sourceTree = "<group>"; };
+		80CCE51AAB19414130561F61 /* iOSChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSChatView.swift; sourceTree = "<group>"; };
+		8614E043CDF93B4A281968BE /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		B9CFCAF2C254481CD978CB60 /* LidIAiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LidIAiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BAEA2E187FF25153A497A19E /* MeetingDetailiOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingDetailiOSView.swift; sourceTree = "<group>"; };
+		CA6B8F4E4BA0BCD167321875 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		EB005D9B8F99BDA0C84B2AF2 /* LidIAiOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LidIAiOSApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		EB7612EB95B8298CB44B6827 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E718CF24F3BFDAB659BE0555 /* LidIAKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		230172FA904FA14943FEB5CF /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				3A51A6AF7E20BE7198D67807 /* LidIAKit */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		43F826B109A3172D79BB8463 = {
+			isa = PBXGroup;
+			children = (
+				230172FA904FA14943FEB5CF /* Packages */,
+				80C84E1501A91D7697EBC2A7 /* Resources */,
+				FE007BE547288930B08B08AC /* Sources */,
+				9BC7553761CAEFA8CBC9DD6E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		80C84E1501A91D7697EBC2A7 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CA6B8F4E4BA0BCD167321875 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		9BC7553761CAEFA8CBC9DD6E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B9CFCAF2C254481CD978CB60 /* LidIAiOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FE007BE547288930B08B08AC /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				8614E043CDF93B4A281968BE /* DashboardView.swift */,
+				80CCE51AAB19414130561F61 /* iOSChatView.swift */,
+				7D5562579CC4FBB49848A2BA /* iOSRootView.swift */,
+				6FB8CB3FA44A6D76EBE5F076 /* iOSSettings.swift */,
+				5FF7FE3427846372723EFE8A /* iOSSettingsView.swift */,
+				EB005D9B8F99BDA0C84B2AF2 /* LidIAiOSApp.swift */,
+				BAEA2E187FF25153A497A19E /* MeetingDetailiOSView.swift */,
+				4EA39D2A0B30B4AEFF6A813B /* VoiceModeView.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9DFC46591E29D6EA7887ACBF /* LidIAiOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3E28137FB9D7EC63F8D0DEB6 /* Build configuration list for PBXNativeTarget "LidIAiOS" */;
+			buildPhases = (
+				CB05CAC4935CA59268C1B6F7 /* Sources */,
+				B158F6B9C4EA0A4C6485A731 /* Resources */,
+				EB7612EB95B8298CB44B6827 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LidIAiOS;
+			packageProductDependencies = (
+				4B5631ADBD3C054EFE047698 /* LidIAKit */,
+			);
+			productName = LidIAiOS;
+			productReference = B9CFCAF2C254481CD978CB60 /* LidIAiOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		97832258E8AEC204FC1F2B83 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					9DFC46591E29D6EA7887ACBF = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 30B353AF7AA08549474C93CD /* Build configuration list for PBXProject "LidIAiOS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 43F826B109A3172D79BB8463;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F5E3849435BE4F776E42D6A9 /* XCLocalSwiftPackageReference "../Packages/LidIAKit" */,
+			);
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9DFC46591E29D6EA7887ACBF /* LidIAiOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B158F6B9C4EA0A4C6485A731 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				19431215EC200D4AB6A41B27 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CB05CAC4935CA59268C1B6F7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				47CA95A57DCB25B6C6D83D09 /* DashboardView.swift in Sources */,
+				12A37A85E0E35F97D4441C94 /* LidIAiOSApp.swift in Sources */,
+				E124502CAC2B2DE336FF3EFB /* MeetingDetailiOSView.swift in Sources */,
+				146D488C7B6EC00A305BE767 /* VoiceModeView.swift in Sources */,
+				0F4AB22E740B39FACA7C9152 /* iOSChatView.swift in Sources */,
+				E047DD7384ABB74077CB4F93 /* iOSRootView.swift in Sources */,
+				C37396A489DC38953FAFB425 /* iOSSettings.swift in Sources */,
+				915AB69B1A3DB08D15F01E07 /* iOSSettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0F5D118B270D6782788D2B51 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		4BAB15884D4BE6319834BC45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/LidIAiOS.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 68NW67LUMM;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.lidia.ios;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CDB72AE04B39AD50021D6D7D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/LidIAiOS.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.lidia.ios;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F934F0C17360F38886EAE77B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		30B353AF7AA08549474C93CD /* Build configuration list for PBXProject "LidIAiOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F934F0C17360F38886EAE77B /* Debug */,
+				0F5D118B270D6782788D2B51 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3E28137FB9D7EC63F8D0DEB6 /* Build configuration list for PBXNativeTarget "LidIAiOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4BAB15884D4BE6319834BC45 /* Debug */,
+				CDB72AE04B39AD50021D6D7D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F5E3849435BE4F776E42D6A9 /* XCLocalSwiftPackageReference "../Packages/LidIAKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/LidIAKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4B5631ADBD3C054EFE047698 /* LidIAKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LidIAKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 97832258E8AEC204FC1F2B83 /* Project object */;
+}

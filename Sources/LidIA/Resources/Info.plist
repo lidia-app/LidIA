@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>LidIA</string>
+	<key>CFBundleExecutable</key>
+	<string>LidIA</string>
+	<key>CFBundleIdentifier</key>
+	<string>io.lidia.app</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>LidIA</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>io.lidia.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.lidia.app</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon.icns</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>26.0</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>LidIA needs microphone access to transcribe your meetings in real-time.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>LidIA needs screen capture access to listen to system audio from your meeting apps.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>LidIA uses speech recognition to transcribe your meetings locally.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>LidIA needs calendar access to show your upcoming meetings and auto-associate recordings with calendar events.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>LidIA creates reminders for action items extracted from your meetings.</string>
+</dict>
+</plist>

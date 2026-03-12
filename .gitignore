@@ -1,0 +1,23 @@
+.DS_Store
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
+dist/
+docs/plans/
+
+# Secrets & credentials
+.env
+*.env
+.env.*
+.env.local
+*.key
+*.pem
+*.p12
+
+# Claude Code local settings (personal permissions/preferences)
+.claude/settings.local.json
+.claude/plans/
+.claude/worktrees/

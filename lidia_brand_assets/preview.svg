@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" fill="none">
+<rect width="1600" height="1100" fill="#F8FAFC"/>
+<text x="120" y="90" font-family="Arial, sans-serif" font-size="42" fill="#0F172A" font-weight="700">LidIA red-magenta tribute asset set</text>
+<image href="lidia_logo_primary_1024.png" x="120" y="150" width="420" height="420"/>
+<text x="240" y="610" font-family="Arial, sans-serif" font-size="28" fill="#334155" font-weight="600">Primary</text>
+<image href="lidia_logo_monochrome_1024.png" x="600" y="150" width="300" height="300"/>
+<text x="650" y="490" font-family="Arial, sans-serif" font-size="28" fill="#334155" font-weight="600">Monochrome</text>
+<image href="lidia_menu_template_1024x512.png" x="1020" y="220" width="360" height="180"/>
+<text x="1060" y="470" font-family="Arial, sans-serif" font-size="28" fill="#334155" font-weight="600">Menu bar template</text>
+<image href="lidia_notification_512.png" x="600" y="610" width="220" height="220"/>
+<text x="610" y="870" font-family="Arial, sans-serif" font-size="28" fill="#334155" font-weight="600">Notification</text>
+<image href="lidia_favicon_64.png" x="1010" y="660" width="96" height="96"/>
+<text x="965" y="820" font-family="Arial, sans-serif" font-size="28" fill="#334155" font-weight="600">Favicon</text>
+<text x="120" y="980" font-family="Arial, sans-serif" font-size="30" fill="#0F172A" font-weight="700">Included:</text>
+<text x="120" y="1025" font-family="Arial, sans-serif" font-size="24" fill="#334155">SVGs, PNGs, favicon.ico, LidIA.iconset, BRAND_GUIDE.md, LidIA.icns</text>
+</svg>

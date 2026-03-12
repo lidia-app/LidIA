@@ -1,0 +1,48 @@
+name: LidIA
+options:
+  bundleIdPrefix: io.lidia
+  deploymentTarget:
+    macOS: "26.0"
+  xcodeVersion: "26.3"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+
+targets:
+  LidIA:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/LidIA
+        excludes:
+          - Resources/LidIA.entitlements
+          - Resources/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.lidia.app
+        CODE_SIGN_ENTITLEMENTS: Sources/LidIA/Resources/LidIA.entitlements
+        PRODUCT_NAME: LidIA
+        ENABLE_HARDENED_RUNTIME: false
+        CODE_SIGN_IDENTITY: "-"
+        INFOPLIST_FILE: Info.plist
+    dependencies:
+      - package: SwiftWhisper
+  LidIATests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/LidIATests
+    dependencies:
+      - target: LidIA
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.lidia.app.tests
+
+packages:
+  SwiftWhisper:
+    url: https://github.com/exPHAT/SwiftWhisper.git
+    from: "1.2.0"
