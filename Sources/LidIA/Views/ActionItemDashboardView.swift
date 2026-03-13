@@ -112,13 +112,6 @@ struct ActionItemDashboardView: View {
                             deleteActionItem(item, from: meeting)
                         }
                     )
-                    .overlay(alignment: .leading) {
-                        if item.isUrgent {
-                            Rectangle()
-                                .fill(.orange)
-                                .frame(width: 3)
-                        }
-                    }
                     .background {
                         if hoveredItemID == item.id {
                             RoundedRectangle(cornerRadius: 8)

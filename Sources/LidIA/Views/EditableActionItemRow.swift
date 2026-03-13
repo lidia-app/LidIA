@@ -28,15 +28,14 @@ struct EditableActionItemRow: View {
             .font(.body)
             .buttonStyle(.borderless)
 
-            // Priority icon — only visible when set
+            // Priority indicator
             if item.priority != "none" {
-                Image(systemName: priorityIcon(item.priority))
-                    .foregroundStyle(priorityColor(item.priority, isAutoUrgent: item.isAutoUrgent))
-                    .font(.caption2)
+                priorityBadge(item.priority, isAutoUrgent: item.isAutoUrgent)
             } else if item.isAutoUrgent {
                 Image(systemName: "bolt.fill")
                     .foregroundStyle(.yellow)
-                    .font(.caption2)
+                    .font(.caption)
+                    .frame(width: 16)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -251,6 +250,25 @@ struct EditableActionItemRow: View {
         case "reminder": .orange
         case "n8n": .green
         default: .secondary
+        }
+    }
+
+    @ViewBuilder
+    private func priorityBadge(_ level: String, isAutoUrgent: Bool) -> some View {
+        let color = priorityColor(level, isAutoUrgent: isAutoUrgent)
+        Text(priorityLabel(level))
+            .font(.system(size: 9, weight: .heavy, design: .rounded))
+            .foregroundStyle(color)
+            .frame(width: 16)
+    }
+
+    private func priorityLabel(_ level: String) -> String {
+        switch level {
+        case "critical": "!!!"
+        case "high": "!!"
+        case "medium": "!"
+        case "low": "\u{2193}"
+        default: ""
         }
     }
 
