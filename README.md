@@ -1,8 +1,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![macOS](https://img.shields.io/badge/macOS-26+-blue.svg)](https://developer.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-6.2-orange.svg)](https://swift.org)
+[![Website](https://img.shields.io/badge/Website-lidia--app.github.io-ff4fa3)](https://lidia-app.github.io)
 
 # LidIA
+
+> **[lidia-app.github.io](https://lidia-app.github.io)** — See it in action
 
 A native macOS meeting intelligence app — transcribe, summarize, and chat with your meetings using local or cloud AI.
 
