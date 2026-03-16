@@ -1,8 +1,13 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct GeneralSettingsTab: View {
     @Bindable var settings: AppSettings
+    @Environment(\.modelContext) private var modelContext
+    @State private var showImportPreview = false
+    @State private var importURLs: [URL] = []
+    @State private var importResult: NoteImporter.ImportResult?
 
     var body: some View {
         // Appearance
@@ -84,6 +89,65 @@ struct GeneralSettingsTab: View {
         Section("Meeting Templates") {
             MeetingTemplatesSection(settings: settings)
         }
+
+        // Import Notes
+        Section("Import Notes") {
+            Text("Import .md, .mdx, or .txt files as past meetings. Files with YAML frontmatter will have their title and date extracted automatically.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack {
+                Button("Import Files...") {
+                    let panel = NSOpenPanel()
+                    panel.allowsMultipleSelection = true
+                    panel.canChooseDirectories = true
+                    panel.canChooseFiles = true
+                    panel.allowedContentTypes = [.plainText]
+                    if let mdType = UTType(filenameExtension: "md") {
+                        panel.allowedContentTypes.append(mdType)
+                    }
+                    if panel.runModal() == .OK {
+                        importURLs = gatherFiles(from: panel.urls)
+                        showImportPreview = true
+                    }
+                }
+                .buttonStyle(.glass)
+
+                if let lastResult = importResult {
+                    Text("Last import: \(lastResult.imported) imported, \(lastResult.skipped) skipped")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .alert("Import Preview", isPresented: $showImportPreview) {
+            Button("Cancel", role: .cancel) {}
+            Button("Import \(importURLs.count) files") {
+                importResult = NoteImporter.importFiles(importURLs, into: modelContext)
+            }
+        } message: {
+            Text("Found \(importURLs.count) files to import. This will create new meeting records.")
+        }
+    }
+
+    private func gatherFiles(from urls: [URL]) -> [URL] {
+        var files: [URL] = []
+        for url in urls {
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
+                if let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: nil) {
+                    for case let fileURL as URL in enumerator {
+                        let ext = fileURL.pathExtension.lowercased()
+                        if ext == "md" || ext == "mdx" || ext == "txt" {
+                            files.append(fileURL)
+                        }
+                    }
+                }
+            } else {
+                files.append(url)
+            }
+        }
+        return files
     }
 
     private func openOrCreateSoulFile() {

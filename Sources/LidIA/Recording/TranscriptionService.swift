@@ -7,6 +7,8 @@ struct TranscriptionService {
         switch settings.sttEngine {
         case .parakeet:
             return ParakeetEngine()
+        case .graniteSpeech:
+            return GraniteSpeechEngine()
         case .whisperKit:
             return WhisperKitEngine(
                 modelName: settings.whisperKitModel,

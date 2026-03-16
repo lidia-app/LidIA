@@ -2,7 +2,7 @@ name: LidIAiOS
 options:
   bundleIdPrefix: io.lidia
   deploymentTarget:
-    iOS: "18.0"
+    iOS: "26.0"
   xcodeVersion: "26.0"
 
 packages:
@@ -31,3 +31,10 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     entitlements:
       path: Resources/LidIAiOS.entitlements
+      properties:
+        com.apple.developer.icloud-services:
+          - CloudDocuments
+          - CloudKit
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.io.lidia.app
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)io.lidia.app

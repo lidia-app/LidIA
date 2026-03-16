@@ -5,20 +5,33 @@ import os.log
 actor N8nClient {
     private static let logger = Logger(subsystem: "io.lidia.app", category: "N8nClient")
 
-    struct WebhookPayload: Encodable, Sendable {
-        let meetingTitle: String
-        let date: String
-        let duration: TimeInterval
-        let summary: String
-        let actionItems: [ActionItemPayload]
-        let attendees: [String]
-        let transcript: String
+    struct AttendeeContext: Encodable, Sendable {
+        let email: String
+        let openActionItems: Int
+        let overdueActionItems: Int
+        let lastMeetingDate: String?
+        let totalMeetings: Int
     }
 
     struct ActionItemPayload: Encodable, Sendable {
-        let title: String
-        let assignee: String?
-        let deadline: String?
+        var title: String
+        var assignee: String?
+        var deadline: String?
+        var priority: String? = nil
+        var suggestedDestination: String? = nil
+    }
+
+    struct WebhookPayload: Encodable, Sendable {
+        var meetingTitle: String
+        var date: String
+        var duration: TimeInterval
+        var summary: String
+        var actionItems: [ActionItemPayload]
+        var attendees: [String]
+        var transcript: String
+        var notes: String = ""
+        var meetingType: String? = nil
+        var attendeeContext: [AttendeeContext] = []
     }
 
     /// Sends a pre-built payload to the configured n8n webhook URL.

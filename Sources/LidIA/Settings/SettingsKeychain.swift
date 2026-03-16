@@ -7,14 +7,15 @@ enum SettingsKeychain {
     private static let keychainService = "io.lidia.app"
 
     static func save(key: String, value: String) {
-        let data = Data(value.utf8)
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let data = Data(trimmed.utf8)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: key,
         ]
         SecItemDelete(query as CFDictionary)
-        guard !value.isEmpty else { return }
+        guard !trimmed.isEmpty else { return }
         var addQuery = query
         addQuery[kSecValueData as String] = data
         SecItemAdd(addQuery as CFDictionary, nil)
@@ -30,6 +31,6 @@ enum SettingsKeychain {
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         guard status == errSecSuccess, let data = result as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

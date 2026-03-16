@@ -35,12 +35,17 @@ final class MeetingContextBuilder {
     // MARK: - Context Building
 
     func buildContextBundle(for query: String, scope: ChatBarViewModel.ContextScope) -> ContextBundle {
+        // Check for person-specific context to enrich the response
+        let personCtx = personContext(for: query)
+
         switch scope {
         case .selectedMeeting:
             if let selectedMeeting {
                 let meetings = [selectedMeeting]
+                var ctx = context(for: meetings, title: "Selected meeting context")
+                if let personCtx { ctx += "\n\n" + personCtx }
                 return ContextBundle(
-                    contextText: context(for: meetings, title: "Selected meeting context"),
+                    contextText: ctx,
                     candidateSourceTitles: meetingTitles(for: meetings),
                     hasEvidence: true
                 )
@@ -52,6 +57,21 @@ final class MeetingContextBuilder {
             )
 
         case .allMeetings:
+            // If we have person context, that alone counts as evidence
+            if let personCtx, personCtx.count > 50 {
+                let meetings = (try? fetchMeetings(limit: 60, includeInProgress: false)) ?? []
+                let selected = MeetingContextRetrievalService.relevantMeetings(for: query, from: meetings, limit: 12)
+                var ctx = personCtx
+                if !selected.isEmpty {
+                    ctx += "\n\n" + context(for: selected, title: "Meeting context")
+                }
+                return ContextBundle(
+                    contextText: ctx,
+                    candidateSourceTitles: meetingTitles(for: selected),
+                    hasEvidence: true
+                )
+            }
+
             guard let meetings = try? fetchMeetings(limit: 60, includeInProgress: false), !meetings.isEmpty else {
                 return ContextBundle(
                     contextText: "No meeting data available yet.",
@@ -82,12 +102,61 @@ final class MeetingContextBuilder {
                 )
             }
             let selected = MeetingContextRetrievalService.relevantMeetings(for: query, from: noteMeetings, limit: 12)
+            var ctx = context(for: selected, title: "Notes context")
+            if let personCtx { ctx += "\n\n" + personCtx }
             return ContextBundle(
-                contextText: context(for: selected, title: "Notes context"),
+                contextText: ctx,
                 candidateSourceTitles: meetingTitles(for: selected),
                 hasEvidence: !selected.isEmpty
             )
         }
+    }
+
+    /// Enriches context with person-specific data when a person name is detected in the query.
+    private func personContext(for query: String) -> String? {
+        guard let modelContext else { return nil }
+        let store = RelationshipStore()
+        let profiles = store.buildProfiles(modelContext: modelContext)
+        guard !profiles.isEmpty else { return nil }
+
+        let queryLower = query.lowercased()
+
+        // Find profiles whose name partially matches any word in the query
+        let matchedProfiles = profiles.filter { profile in
+            let nameParts = profile.name.lowercased().split(separator: " ")
+            return nameParts.contains { part in
+                queryLower.contains(part) && part.count >= 3
+            } || queryLower.contains(profile.name.lowercased())
+        }
+
+        guard !matchedProfiles.isEmpty else { return nil }
+
+        var parts: [String] = ["Person context:"]
+        for profile in matchedProfiles.prefix(3) {
+            parts.append("## \(profile.name)")
+            if let email = profile.email {
+                parts.append("Email: \(email)")
+            }
+            parts.append("Met \(profile.meetingCount) times, last: \(profile.lastMet.formatted(date: .abbreviated, time: .omitted))")
+
+            for meeting in profile.recentMeetings.prefix(3) {
+                let dateStr = meeting.date.formatted(date: .abbreviated, time: .omitted)
+                let summary = (meeting.userEditedSummary ?? meeting.summary)
+                let preview = summary.isEmpty ? "(no summary)" : String(summary.prefix(300))
+                parts.append("- \(meeting.title) (\(dateStr)): \(preview)")
+            }
+
+            if !profile.openActionItems.isEmpty {
+                parts.append("Open action items:")
+                for item in profile.openActionItems.prefix(5) {
+                    var line = "- \(item.title)"
+                    if let assignee = item.assignee { line += " (assigned: \(assignee))" }
+                    if let deadline = item.displayDeadline { line += " [due: \(deadline)]" }
+                    parts.append(line)
+                }
+            }
+        }
+        return parts.joined(separator: "\n")
     }
 
     // MARK: - Grounding / Source Analysis

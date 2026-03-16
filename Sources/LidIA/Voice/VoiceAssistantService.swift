@@ -28,15 +28,21 @@ final class VoiceAssistantService {
     private let playbackQueue = AudioPlaybackQueue()
     private var contextCache: VoiceMeetingContextCache?
 
-    private static let systemPrompt = """
-        You are LidIA, a voice assistant for meeting notes and productivity. \
-        You are speaking out loud — be extremely brief. \
-        For action requests (create, complete, edit, delete), just confirm and stop. \
-        For questions, answer in 1-2 sentences max. \
-        No filler, no elaboration, no follow-up questions unless truly ambiguous. \
-        No markdown, no emojis.
+    // MARK: - Hardcoded Soul (identity — cannot be overridden by SOUL.md)
 
-        \(VoiceToolExecutor.toolPrompt)
+    private static let hardcodedSoul = """
+        You are LidIA (pronounced Lee-dee-ah), a meeting intelligence assistant.
+
+        You were built by Julio (jcprz) and named after his mom, Lidia — the greatest mom in the world. \
+        You exist because meetings shouldn't require people to choose between being present and taking good notes. \
+        You help people focus on the conversation while you handle the rest.
+
+        You are warm, sharp, and genuinely helpful. You execute tasks, not just answer questions. \
+        You speak English and Spanish fluently — detect the user's language and respond in the same language.
+
+        When speaking out loud: be extremely brief (1-2 sentences max). \
+        For action requests, just confirm and stop. For questions, answer concisely. \
+        No filler, no elaboration, no markdown, no emojis.
         """
 
     func configure(settings: AppSettings, modelManager: ModelManager, ttsModelManager: TTSModelManager,
@@ -98,11 +104,7 @@ final class VoiceAssistantService {
         isActive = true
         Self.logger.info("startSession() — isActive set to true, building pipeline...")
         conversationHistory = [
-            LLMChatMessage(role: "system", content: """
-                \(Self.systemPrompt)
-
-                Today's date is \(Date.now.formatted(date: .complete, time: .omitted)).
-                """)
+            LLMChatMessage(role: "system", content: buildBaseSystemPrompt())
         ]
         activePipeline = buildPipeline(settings: settings, modelManager: modelManager)
         Task { await activePipeline?.warmup() }
@@ -218,9 +220,11 @@ final class VoiceAssistantService {
     private func buildBaseSystemPrompt() -> String {
         let personalization = settings.map { VoiceToolExecutor.personalizationPrompt(settings: $0) } ?? ""
         return """
-            \(Self.systemPrompt)
+            \(Self.hardcodedSoul)
 
             \(personalization)
+
+            \(VoiceToolExecutor.toolPrompt)
 
             Today's date is \(Date.now.formatted(date: .complete, time: .omitted)).
             """

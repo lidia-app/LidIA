@@ -69,7 +69,9 @@ struct ChatPopupView: View {
                 } else {
                     LazyVStack(spacing: 10) {
                         ForEach(viewModel.messages) { message in
-                            MessageBubbleView(message: message)
+                            MessageBubbleView(message: message, onRetry: message.role == .assistant ? {
+                                viewModel.retry(messageID: message.id)
+                            } : nil)
                                 .id(message.id)
                         }
 

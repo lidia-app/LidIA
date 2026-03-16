@@ -91,8 +91,7 @@ struct FloatingTranscriptView: View {
             .padding(.vertical, 8)
         }
         .frame(width: 360, height: 280)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .glassEffect(.regular, in: .rect(cornerRadius: 12))
     }
 
     // MARK: - Helpers

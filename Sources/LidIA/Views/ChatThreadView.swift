@@ -71,7 +71,9 @@ struct ChatThreadView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     ForEach(viewModel.messages) { message in
-                        MessageBubbleView(message: message)
+                        MessageBubbleView(message: message, onRetry: message.role == .assistant ? {
+                            viewModel.retry(messageID: message.id)
+                        } : nil)
                             .id(message.id)
                     }
 

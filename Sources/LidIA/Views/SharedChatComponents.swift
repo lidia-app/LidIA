@@ -133,6 +133,7 @@ struct ModelMenuView: View {
 
 struct MessageBubbleView: View {
     let message: ChatBarMessage
+    var onRetry: (() -> Void)?
 
     var body: some View {
         if message.role == .user {
@@ -149,8 +150,22 @@ struct MessageBubbleView: View {
                     .font(.subheadline)
                     .textSelection(.enabled)
 
-                if let confidence = message.groundingConfidence {
-                    ConfidenceBadgeView(confidence: confidence)
+                HStack(spacing: 8) {
+                    if let confidence = message.groundingConfidence {
+                        ConfidenceBadgeView(confidence: confidence)
+                    }
+
+                    if let onRetry {
+                        Button {
+                            onRetry()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Retry this response")
+                    }
                 }
 
                 if !message.sourceMeetings.isEmpty {

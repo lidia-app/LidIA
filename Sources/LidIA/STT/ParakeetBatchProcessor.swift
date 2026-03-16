@@ -12,6 +12,13 @@ actor ParakeetBatchProcessor {
     func process(samples: [Float], systemSamples: [Float], enableDiarization: Bool) async throws -> [TranscriptWord] {
         guard !samples.isEmpty else { return [] }
 
+        // TODO: DeepFilterNet noise reduction
+        // When speech-swift SpeechEnhancement module is integrated:
+        // if noiseReductionEnabled {
+        //     let enhancer = DeepFilterNet3()
+        //     samples = try await enhancer.enhance(samples)
+        // }
+
         let duration = Double(samples.count) / 16000.0
         batchLogger.info("Processing \(String(format: "%.1f", duration))s of audio (diarization: \(enableDiarization))")
 
@@ -73,42 +80,88 @@ actor ParakeetBatchProcessor {
         // Step B: Speaker diarization (if enabled)
         guard enableDiarization, !words.isEmpty else { return words }
 
+        let diarizationAudio = systemSamples.isEmpty ? samples : systemSamples
+
+        // Try speech-swift (pyannote + WeSpeaker — better accuracy) with FluidAudio fallback
         do {
-            let config = OfflineDiarizerConfig(
-                segmentationMinDurationOn: 1.0,  // Require at least 1s of speech per segment
-                segmentationMinDurationOff: 0.5   // Require at least 0.5s gap between speakers
-            )
-            let diarizer = OfflineDiarizerManager(config: config)
-            try await diarizer.prepareModels()
+            let ssSegments = try await SpeechSwiftDiarizer.shared.diarize(samples: diarizationAudio)
 
-            let diarResult = try await diarizer.process(audio: systemSamples.isEmpty ? samples : systemSamples)
-            let rawSegments = diarResult.segments
+            batchLogger.info("speech-swift diarization: \(Set(ssSegments.map(\.speakerId)).count) speakers, \(ssSegments.count) segments")
 
-            batchLogger.info("Diarization found \(Set(rawSegments.map(\.speakerId)).count) speakers across \(rawSegments.count) raw segments")
-
-            // Step C: Smooth segments — merge short spurious segments into neighbors
-            let segments = Self.smoothSegments(rawSegments)
-
-            batchLogger.info("After smoothing: \(Set(segments.map(\.speakerId)).count) speakers across \(segments.count) segments")
-
-            // Step D: Assign speaker ID to each word based on timestamp overlap
-            let uniqueSpeakers = Array(Set(segments.map(\.speakerId))).sorted()
-            let speakerIndex: [String: Int] = Dictionary(uniqueKeysWithValues: uniqueSpeakers.enumerated().map { ($1, $0) })
-
+            // Assign speaker ID to each word based on timestamp overlap
             for i in words.indices {
-                let wordMid = (words[i].start + words[i].end) / 2.0
-                if let segment = segments.first(where: { wordMid >= Double($0.startTimeSeconds) && wordMid <= Double($0.endTimeSeconds) }) {
-                    let idx = speakerIndex[segment.speakerId] ?? 0
-                    words[i].speaker = idx
-                    words[i].speakerName = "Speaker \(idx + 1)"
-                    words[i].isLocalSpeaker = false
+                let wordMid = Float((words[i].start + words[i].end) / 2.0)
+                if let segment = ssSegments.first(where: { wordMid >= $0.startTime && wordMid <= $0.endTime }) {
+                    words[i].speaker = segment.speakerId
                 }
             }
+
+            Self.assignLocalSpeaker(&words)
         } catch {
-            batchLogger.error("Diarization failed (transcript preserved without speakers): \(error)")
+            batchLogger.warning("speech-swift diarization failed, falling back to FluidAudio: \(error)")
+
+            // Fallback: FluidAudio OfflineDiarizerManager
+            do {
+                let config = OfflineDiarizerConfig(
+                    segmentationMinDurationOn: 1.0,
+                    segmentationMinDurationOff: 0.5
+                )
+                let diarizer = OfflineDiarizerManager(config: config)
+                try await diarizer.prepareModels()
+
+                let diarResult = try await diarizer.process(audio: diarizationAudio)
+                let rawSegments = diarResult.segments
+
+                batchLogger.info("FluidAudio diarization found \(Set(rawSegments.map(\.speakerId)).count) speakers across \(rawSegments.count) raw segments")
+
+                let segments = Self.smoothSegments(rawSegments)
+
+                batchLogger.info("After smoothing: \(Set(segments.map(\.speakerId)).count) speakers across \(segments.count) segments")
+
+                let uniqueSpeakers = Array(Set(segments.map(\.speakerId))).sorted()
+                let speakerIndex: [String: Int] = Dictionary(uniqueKeysWithValues: uniqueSpeakers.enumerated().map { ($1, $0) })
+
+                for i in words.indices {
+                    let wordMid = (words[i].start + words[i].end) / 2.0
+                    if let segment = segments.first(where: { wordMid >= Double($0.startTimeSeconds) && wordMid <= Double($0.endTimeSeconds) }) {
+                        let idx = speakerIndex[segment.speakerId] ?? 0
+                        words[i].speaker = idx
+                    }
+                }
+
+                Self.assignLocalSpeaker(&words)
+            } catch {
+                batchLogger.error("Diarization failed (transcript preserved without speakers): \(error)")
+            }
         }
 
         return words
+    }
+
+    // MARK: - Local Speaker Assignment
+
+    /// Determine which speaker ID is "me" by majority vote on isLocalSpeaker flags,
+    /// then set isLocalSpeaker based on speaker ID mapping.
+    private static func assignLocalSpeaker(_ words: inout [TranscriptWord]) {
+        var localVotes: [Int: Int] = [:]
+        var totalVotes: [Int: Int] = [:]
+        for word in words where word.speaker != nil {
+            let sp = word.speaker!
+            totalVotes[sp, default: 0] += 1
+            if word.isLocalSpeaker == true {
+                localVotes[sp, default: 0] += 1
+            }
+        }
+
+        let localSpeakerID = localVotes.max(by: { a, b in
+            let ratioA = Double(a.value) / Double(totalVotes[a.key] ?? 1)
+            let ratioB = Double(b.value) / Double(totalVotes[b.key] ?? 1)
+            return ratioA < ratioB
+        })?.key
+
+        for i in words.indices where words[i].speaker != nil {
+            words[i].isLocalSpeaker = words[i].speaker == localSpeakerID
+        }
     }
 
     // MARK: - Segment Smoothing

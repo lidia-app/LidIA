@@ -21,6 +21,7 @@ final class PostProcessingService {
     ) async {
         let combinedSamples = micSamples + systemSamples
         let useParakeetBatch = settings.sttEngine == .parakeet && !combinedSamples.isEmpty
+        let useGraniteBatch = settings.sttEngine == .graniteSpeech && !combinedSamples.isEmpty
         let enableDiarization = settings.enableDiarization
 
         do {
@@ -44,6 +45,31 @@ final class PostProcessingService {
                     }
                     meeting.rawTranscript = tagged
                     Self.logger.info("Batch transcription replaced stream output with \(tagged.count) words")
+                }
+            } else if useGraniteBatch {
+                Self.logger.info("Running Granite Speech batch transcription with \(combinedSamples.count) samples")
+                let engine = GraniteSpeechEngine()
+                let audioStream = AsyncStream<AudioChunk> { continuation in
+                    // Feed all samples as one chunk
+                    continuation.yield(AudioChunk(samples: combinedSamples, sampleRate: 16000, timestamp: 0, source: .mic))
+                    continuation.finish()
+                }
+                var batchWords: [TranscriptWord] = []
+                for await word in engine.transcribe(audioStream: audioStream) {
+                    batchWords.append(word)
+                }
+                if !batchWords.isEmpty {
+                    // Tag with local speaker info from RMS events
+                    let startTime = sourceEvents.first?.timestamp ?? 0
+                    for i in batchWords.indices {
+                        batchWords[i].isLocalSpeaker = Self.resolveLocalSpeaker(
+                            wordStart: startTime + batchWords[i].start,
+                            wordEnd: startTime + batchWords[i].end,
+                            sourceEvents: sourceEvents
+                        )
+                    }
+                    meeting.rawTranscript = batchWords
+                    Self.logger.info("Granite batch transcription produced \(batchWords.count) words")
                 }
             }
 
@@ -215,7 +241,8 @@ final class PostProcessingService {
             meeting: meeting,
             modelContext: modelContext,
             settings: settings,
-            eventKitManager: eventKitManager
+            eventKitManager: eventKitManager,
+            modelManager: modelManager
         )
     }
 

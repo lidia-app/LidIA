@@ -112,6 +112,22 @@ final class IntegrationSettings {
         didSet { saveDefault(remindersMyItemsOnly, forKey: "remindersMyItemsOnly") }
     }
 
+    // Autopilot
+    var autopilotEnabled: Bool = false {
+        didSet { saveDefault(autopilotEnabled, forKey: "autopilotEnabled") }
+    }
+
+    // Markdown Vault Export
+    var vaultExportEnabled: Bool = false {
+        didSet { saveDefault(vaultExportEnabled, forKey: "vaultExportEnabled") }
+    }
+    var vaultExportPath: String = "~/Documents/LidIA" {
+        didSet { saveDefault(vaultExportPath, forKey: "vaultExportPath") }
+    }
+    var vaultExportIncludeTranscript: Bool = false {
+        didSet { saveDefault(vaultExportIncludeTranscript, forKey: "vaultExportIncludeTranscript") }
+    }
+
     // MARK: - Init
 
     init() {
@@ -179,6 +195,12 @@ final class IntegrationSettings {
         if let val = defaults.object(forKey: "remindersMyItemsOnly") as? Bool {
             remindersMyItemsOnly = val
         }
+        autopilotEnabled = defaults.bool(forKey: "autopilotEnabled")
+        vaultExportEnabled = defaults.bool(forKey: "vaultExportEnabled")
+        if let path = defaults.string(forKey: "vaultExportPath"), !path.isEmpty {
+            vaultExportPath = path
+        }
+        vaultExportIncludeTranscript = defaults.bool(forKey: "vaultExportIncludeTranscript")
     }
 
     // MARK: - Persistence Helpers

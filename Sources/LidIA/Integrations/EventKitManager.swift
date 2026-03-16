@@ -66,9 +66,9 @@ final class EventKitManager {
     func refresh(settings: AppSettings) async {
         error = nil
         let now = Date()
-        let endOfDay = Calendar.current.startOfDay(for: now).addingTimeInterval(24 * 60 * 60)
+        let endDate = Calendar.current.date(byAdding: .day, value: 7, to: now) ?? now.addingTimeInterval(7 * 24 * 60 * 60)
 
-        let predicate = store.predicateForEvents(withStart: now, end: endOfDay, calendars: nil)
+        let predicate = store.predicateForEvents(withStart: now, end: endDate, calendars: nil)
         let ekEvents = store.events(matching: predicate)
 
         upcomingEvents = ekEvents

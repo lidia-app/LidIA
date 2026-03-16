@@ -10,5 +10,18 @@
     <true/>
     <key>com.apple.security.personal-information.reminders</key>
     <true/>
+    <!-- iCloud/CloudKit entitlements — uncomment after developer account verification
+    <key>com.apple.developer.icloud-services</key>
+    <array>
+        <string>CloudDocuments</string>
+        <string>CloudKit</string>
+    </array>
+    <key>com.apple.developer.icloud-container-identifiers</key>
+    <array>
+        <string>iCloud.io.lidia.app</string>
+    </array>
+    <key>com.apple.developer.ubiquity-kvstore-identifier</key>
+    <string>$(TeamIdentifierPrefix)io.lidia.app</string>
+    -->
 </dict>
 </plist>

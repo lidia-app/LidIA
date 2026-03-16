@@ -47,7 +47,7 @@ final class MeetingQueryService {
 
             let client = makeLLMClient(settings: settings, modelManager: modelManager, taskType: .chat)
             let model = modelOverride.flatMap({ $0.isEmpty ? nil : $0 }) ?? effectiveModel(for: .query, settings: settings, taskType: .chat)
-            let content = try await client.chat(
+            let rawContent = try await client.chat(
                 messages: [
                     .init(role: "system", content: """
                         You are a meeting intelligence assistant. Answer questions about the user's meetings \
@@ -70,6 +70,9 @@ final class MeetingQueryService {
                 model: model,
                 format: nil
             )
+
+            // Strip any tool tags the model may emit (local models sometimes hallucinate these)
+            let content = VoiceToolExecutor.stripToolMarkers(rawContent)
 
             // Determine which meetings were referenced in the answer
             let referenced = selected.filter { meeting in
@@ -112,7 +115,7 @@ final class MeetingQueryService {
 
             let client = makeLLMClient(settings: settings, modelManager: modelManager, taskType: .chat)
             let model = effectiveModel(for: .query, settings: settings, taskType: .chat)
-            let content = try await client.chat(
+            let rawContent = try await client.chat(
                 messages: [
                     .init(role: "system", content: """
                         You are a meeting assistant. Answer questions about this specific meeting \
@@ -125,6 +128,8 @@ final class MeetingQueryService {
                 model: model,
                 format: nil
             )
+            // Strip any tool tags the model may emit (local models sometimes hallucinate these)
+            let content = VoiceToolExecutor.stripToolMarkers(rawContent)
             lastResponse = QueryResponse(
                 answer: content,
                 sourceMeetings: [meeting]
@@ -169,11 +174,13 @@ final class MeetingQueryService {
         messages.append(contentsOf: chatHistory)
         messages.append(.init(role: "user", content: text))
 
-        return try await client.chat(
+        let rawContent = try await client.chat(
             messages: messages,
             model: model,
             format: nil
         )
+        // Strip any tool tags the model may emit (local models sometimes hallucinate these)
+        return VoiceToolExecutor.stripToolMarkers(rawContent)
     }
 
     // MARK: - Private

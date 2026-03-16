@@ -1,0 +1,66 @@
+/* English — iOS Base */
+
+/* Tabs */
+"Home" = "Home";
+"Action Items" = "Action Items";
+"Chat" = "Chat";
+"Settings" = "Settings";
+
+/* Home */
+"Coming Up" = "Coming Up";
+"Recent Meetings" = "Recent Meetings";
+"No Meetings Yet" = "No Meetings Yet";
+"Meetings recorded on your Mac will appear here after sync." = "Meetings recorded on your Mac will appear here after sync.";
+"Untitled Meeting" = "Untitled Meeting";
+
+/* Action Items */
+"No Action Items" = "No Action Items";
+"Action items from your meetings will appear here after sync." = "Action items from your meetings will appear here after sync.";
+"Filter action items..." = "Filter action items...";
+"Show Completed" = "Show Completed";
+"New Action Item" = "New Action Item";
+"Edit Action Item" = "Edit Action Item";
+"Title" = "Title";
+"Details" = "Details";
+"Assignee" = "Assignee";
+"Deadline" = "Deadline";
+"Priority" = "Priority";
+"Completed" = "Completed";
+"Done" = "Done";
+"Add" = "Add";
+"Cancel" = "Cancel";
+"Delete" = "Delete";
+"Undo" = "Undo";
+
+/* Meeting Detail */
+"Summary" = "Summary";
+"Actions" = "Actions";
+"Transcript" = "Transcript";
+"Notes" = "Notes";
+"No Summary" = "No Summary";
+"No Action Items" = "No Action Items";
+"No Transcript" = "No Transcript";
+"Write your notes..." = "Write your notes...";
+
+/* Chat */
+"Ask about your meetings" = "Ask about your meetings";
+"Ask about meetings..." = "Ask about meetings...";
+"Summarize this week" = "Summarize this week";
+"Open action items" = "Open action items";
+"What did I miss?" = "What did I miss?";
+
+/* Settings */
+"Profile" = "Profile";
+"Your Name" = "Your Name";
+"LLM Provider" = "LLM Provider";
+"Device Sync" = "Device Sync";
+"Enable Sync" = "Enable Sync";
+"Server URL" = "Server URL";
+"Auth Token" = "Auth Token";
+"Soul & Memory" = "Soul & Memory";
+"About" = "About";
+"Version" = "Version";
+
+/* Voice Note */
+"Voice Note" = "Voice Note";
+"Save" = "Save";

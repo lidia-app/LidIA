@@ -1,0 +1,515 @@
+/* English — Base language (strings match keys) */
+
+/* General */
+"LidIA" = "LidIA";
+"Cancel" = "Cancel";
+"Save" = "Save";
+"Delete" = "Delete";
+"Close" = "Close";
+"Add" = "Add";
+"Done" = "Done";
+"Failed" = "Failed";
+"Retry" = "Retry";
+"Change" = "Change";
+"Duplicate" = "Duplicate";
+"View" = "View";
+"Export" = "Export";
+"Download" = "Download";
+"Downloaded" = "Downloaded";
+"Default" = "Default";
+"None" = "None";
+"All" = "All";
+"Choose..." = "Choose...";
+"Filter..." = "Filter...";
+"Searching..." = "Searching...";
+"Good" = "Good";
+"Hot" = "Hot";
+"Critical" = "Critical";
+"Low" = "Low";
+"Medium" = "Medium";
+"High" = "High";
+"Max" = "Max";
+"Min" = "Min";
+"Off" = "Off";
+"Now" = "Now";
+"Dismiss" = "Dismiss";
+"to" = "to";
+"Source" = "Source";
+"Timeout" = "Timeout";
+"Emoji" = "Emoji";
+"Hotkey" = "Hotkey";
+"Description" = "Description";
+"Deadline" = "Deadline";
+"Workspace" = "Workspace";
+"Auto" = "Auto";
+"Recommended" = "Recommended";
+"Built-in" = "Built-in";
+"Live" = "Live";
+"Daily" = "Daily";
+"Mondays" = "Mondays";
+
+/* Navigation */
+"Home" = "Home";
+"Meetings" = "Meetings";
+"People" = "People";
+"Settings" = "Settings";
+"Chat" = "Chat";
+"Notes" = "Notes";
+"Summary" = "Summary";
+"Transcript" = "Transcript";
+"Action Items" = "Action Items";
+"Meeting Prep" = "Meeting Prep";
+"Meeting History" = "Meeting History";
+"Favorites" = "Favorites";
+"Coming up" = "Coming up";
+"Coming Up" = "Coming Up";
+"Past Meetings" = "Past Meetings";
+"Recent Chats" = "Recent Chats";
+"Referenced Meetings" = "Referenced Meetings";
+
+/* Recording */
+"Record" = "Record";
+"Record Meeting" = "Record Meeting";
+"Start Recording" = "Start Recording";
+"Stop Recording" = "Stop Recording";
+"Stop" = "Stop";
+"Stop Now" = "Stop Now";
+"Keep Recording" = "Keep Recording";
+"Start now" = "Start now";
+"Recording" = "Recording";
+"Recording in progress..." = "Recording in progress...";
+"Start recording this meeting" = "Start recording this meeting";
+"Record a quick note" = "Record a quick note";
+"Record Prompt (2 min before)" = "Record Prompt (2 min before)";
+"Hide panel (recording continues)" = "Hide panel (recording continues)";
+"& start recording" = "& start recording";
+"start transcription" = "start transcription";
+
+/* Transcription */
+"Transcription" = "Transcription";
+"Full Transcript" = "Full Transcript";
+"Copy Transcript" = "Copy Transcript";
+"Copy full transcript to clipboard" = "Copy full transcript to clipboard";
+"Edit Transcript" = "Edit Transcript";
+"Find in transcript" = "Find in transcript";
+"Jump to first match" = "Jump to first match";
+"Could not locate in transcript" = "Could not locate in transcript";
+"Processing transcript..." = "Processing transcript...";
+"Finalizing transcript and action items..." = "Finalizing transcript and action items...";
+"Refining transcript..." = "Refining transcript...";
+"Speaker Diarization" = "Speaker Diarization";
+"Identifies different speakers in the transcript after recording stops. Adds a few seconds of processing time." = "Identifies different speakers in the transcript after recording stops. Adds a few seconds of processing time.";
+"Custom Vocabulary" = "Custom Vocabulary";
+"Add Word" = "Add Word";
+"Heard as" = "Heard as";
+"Replace with" = "Replace with";
+"Replace misheard words automatically during transcription." = "Replace misheard words automatically during transcription.";
+"Silence timeout" = "Silence timeout";
+"Auto-stop on silence" = "Auto-stop on silence";
+"Parakeet supports English only. The selected language will be ignored." = "Parakeet supports English only. The selected language will be ignored.";
+"Parakeet TDT ready for transcription" = "Parakeet TDT ready for transcription";
+
+/* Audio */
+"Only captures your microphone. Other participants won't be transcribed." = "Only captures your microphone. Other participants won't be transcribed.";
+"Captures both your microphone and the other participants' audio from meeting apps. Requires Screen Recording permission." = "Captures both your microphone and the other participants' audio from meeting apps. Requires Screen Recording permission.";
+"No Input" = "No Input";
+
+/* AI & LLM */
+"AI" = "AI";
+"AI-powered actions" = "AI-powered actions";
+"LLM Provider" = "LLM Provider";
+"Local MLX" = "Local MLX";
+"Thinking..." = "Thinking...";
+"Generating summary..." = "Generating summary...";
+"Generate Notes" = "Generate Notes";
+"Generate Preview" = "Generate Preview";
+"Generate Title" = "Generate Title";
+"Edit Summary" = "Edit Summary";
+"Copy Summary as Markdown" = "Copy Summary as Markdown";
+"Re-summarizing..." = "Re-summarizing...";
+"Summary processing failed" = "Summary processing failed";
+"No summary yet." = "No summary yet.";
+"Using your edited summary" = "Using your edited summary";
+"Regenerate (Overwrite Edits)" = "Regenerate (Overwrite Edits)";
+"Regenerate (Preserve Edits)" = "Regenerate (Preserve Edits)";
+"Model (blank = auto)" = "Model (blank = auto)";
+"Fallback Model (blank = auto)" = "Fallback Model (blank = auto)";
+"Fetch Models" = "Fetch Models";
+"Auto (first available)" = "Auto (first available)";
+"Auto (Recommended)" = "Auto (Recommended)";
+"Auto mode lets LidIA pick the best model for each task." = "Auto mode lets LidIA pick the best model for each task.";
+"If the primary provider fails, automatically retry with a fallback." = "If the primary provider fails, automatically retry with a fallback.";
+"No model selected. Open Settings and choose a model, or click Fetch Models." = "No model selected. Open Settings and choose a model, or click Fetch Models.";
+"No models downloaded yet. Download one below to get started." = "No models downloaded yet. Download one below to get started.";
+"Select which local models to download:" = "Select which local models to download:";
+"System Prompt" = "System Prompt";
+"Advanced mode (raw prompt)" = "Advanced mode (raw prompt)";
+"Describe what you want" = "Describe what you want";
+"Detecting action destinations..." = "Detecting action destinations...";
+"Queued for processing" = "Queued for processing";
+"Retry Processing" = "Retry Processing";
+"The transcript is still saved. You can retry processing or continue in Notes/Chat." = "The transcript is still saved. You can retry processing or continue in Notes/Chat.";
+
+/* Chat */
+"Ask anything" = "Ask anything";
+"Ask anything about your meetings" = "Ask anything about your meetings";
+"Ask anything about your meetings..." = "Ask anything about your meetings...";
+"Ask about meetings, notes, or action items..." = "Ask about meetings, notes, or action items...";
+"Ask about meetings..." = "Ask about meetings...";
+"Ask about this meeting..." = "Ask about this meeting...";
+"Ask a question about this meeting" = "Ask a question about this meeting";
+"Your first question below." = "Your first question below.";
+"New Chat" = "New Chat";
+"Quick Chat" = "Quick Chat";
+"Show Quick Chat" = "Show Quick Chat";
+"Hide Quick Chat" = "Hide Quick Chat";
+"Continue this chat..." = "Continue this chat...";
+"Start a conversation above to create your first thread." = "Start a conversation above to create your first thread.";
+"Ask your first question below." = "Ask your first question below.";
+"Assistant" = "Assistant";
+
+/* Meetings */
+"Meeting Title" = "Meeting Title";
+"Meeting detected" = "Meeting detected";
+"Meeting Processed" = "Meeting Processed";
+"Meeting Soon" = "Meeting Soon";
+"starts in 5 minutes" = "starts in 5 minutes";
+"Your meeting is starting now" = "Your meeting is starting now";
+"Meeting Templates" = "Meeting Templates";
+"Template Name" = "Template Name";
+"Add Template" = "Add Template";
+"Test Template" = "Test Template";
+"Test with Past Meeting..." = "Test with Past Meeting...";
+"No completed meetings to test with." = "No completed meetings to test with.";
+"Attendees" = "Attendees";
+"Attendees:" = "Attendees:";
+"No prior meetings with these attendees" = "No prior meetings with these attendees";
+"Select a meeting or press Shift+Cmd+N for a quick note" = "Select a meeting or press Shift+Cmd+N for a quick note";
+"Select a meeting..." = "Select a meeting...";
+"No Meeting Selected" = "No Meeting Selected";
+"No meetings coming up" = "No meetings coming up";
+"No meetings yet" = "No meetings yet";
+"Connect a calendar to see upcoming meetings" = "Connect a calendar to see upcoming meetings";
+"Decisions" = "Decisions";
+"Sections" = "Sections";
+"Section name" = "Section name";
+"Add Section" = "Add Section";
+"Bullets" = "Bullets";
+"Prose" = "Prose";
+"Table" = "Table";
+"Preview Result" = "Preview Result";
+"Keywords:" = "Keywords:";
+"e.g. brainstorm, ideation" = "e.g. brainstorm, ideation";
+"e.g. customer calls focusing on pain points and feature requests" = "e.g. customer calls focusing on pain points and feature requests";
+"Description (shown in picker)" = "Description (shown in picker)";
+"Auto-detect meetings" = "Auto-detect meetings";
+"Auto-Detection Rules" = "Auto-Detection Rules";
+"Shows a banner when another app (Zoom, Teams, Chrome, etc.) starts using the microphone." = "Shows a banner when another app (Zoom, Teams, Chrome, etc.) starts using the microphone.";
+"Join" = "Join";
+"Join Meeting" = "Join Meeting";
+"Join + Record" = "Join + Record";
+"Join & Record" = "Join & Record";
+
+/* Action Items */
+"Action item" = "Action item";
+"Action Item Reminders" = "Action Item Reminders";
+"Action Item Reminder" = "Action Item Reminder";
+"Create Action Item" = "Create Action Item";
+"Copy Action Items" = "Copy Action Items";
+"Open Action Items" = "Open Action Items";
+"Add action item..." = "Add action item...";
+"All items" = "All items";
+"My Items" = "My Items";
+"Assigned to me" = "Assigned to me";
+"Show completed" = "Show completed";
+"Overdue Commitments" = "Overdue Commitments";
+"Pending with attendees" = "Pending with attendees";
+"Follow up..." = "Follow up...";
+"Type below to add one, or record a meeting to extract them automatically" = "Type below to add one, or record a meeting to extract them automatically";
+"Urgent+" = "Urgent+";
+"Completed This Week" = "Completed This Week";
+
+/* Notes */
+"New Note" = "New Note";
+"New Note (Shift+Cmd+N)" = "New Note (Shift+Cmd+N)";
+"Quick Note" = "Quick Note";
+"Write your notes..." = "Write your notes...";
+"Copy Full Export" = "Copy Full Export";
+
+/* People */
+"People will appear here after meetings with calendar attendees" = "People will appear here after meetings with calendar attendees";
+"Talking Points for Next Meeting" = "Talking Points for Next Meeting";
+"Add talking point..." = "Add talking point...";
+"Your name" = "Your name";
+"Your Name" = "Your Name";
+"Everyone" = "Everyone";
+"Send to" = "Send to";
+
+/* Search */
+"Search meetings & people..." = "Search meetings & people...";
+
+/* Settings — General */
+"Appearance" = "Appearance";
+"System Default" = "System Default";
+"Notify Before Meetings" = "Notify Before Meetings";
+"5 minutes" = "5 minutes";
+"10 minutes" = "10 minutes";
+"15 minutes" = "15 minutes";
+"Press keys…" = "Press keys…";
+"(Use Default / Auto)" = "(Use Default / Auto)";
+"Show Calendar in Sidebar" = "Show Calendar in Sidebar";
+"Show in Sidebar" = "Show in Sidebar";
+
+/* Settings — API Keys */
+"API Keys" = "API Keys";
+"API keys are stored securely in your macOS Keychain." = "API keys are stored securely in your macOS Keychain.";
+"Enter your OpenAI API key in the API Keys section below." = "Enter your OpenAI API key in the API Keys section below.";
+"Enter your Anthropic API key in the API Keys section below." = "Enter your Anthropic API key in the API Keys section below.";
+"Enter your Cerebras API key in the API Keys section below. Free tier: 1M tokens/day." = "Enter your Cerebras API key in the API Keys section below. Free tier: 1M tokens/day.";
+"Enter your DeepSeek API key in the API Keys section below." = "Enter your DeepSeek API key in the API Keys section below.";
+"Enter your NVIDIA API key (starts with nvapi-*) in the API Keys section below. Access Kimi K2.5, Llama, Mistral and more through one key." = "Enter your NVIDIA API key (starts with nvapi-*) in the API Keys section below. Access Kimi K2.5, Llama, Mistral and more through one key.";
+"Cerebras offers a free tier (1M tokens/day). DeepSeek and NVIDIA NIM are also supported." = "Cerebras offers a free tier (1M tokens/day). DeepSeek and NVIDIA NIM are also supported.";
+"OpenAI Base URL" = "OpenAI Base URL";
+"Ollama URL" = "Ollama URL";
+"Server URL" = "Server URL";
+"Add at least one API key, or use MLX (local, free) as your LLM provider." = "Add at least one API key, or use MLX (local, free) as your LLM provider.";
+"Skip — I have my own API keys" = "Skip — I have my own API keys";
+
+/* Settings — Integrations */
+"Integrations" = "Integrations";
+"No integrations configured" = "No integrations configured";
+"Enable Calendar" = "Enable Calendar";
+"Enable Google Calendar" = "Enable Google Calendar";
+"Sign In with Google" = "Sign In with Google";
+"Sign Out" = "Sign Out";
+"Connected to Google Calendar" = "Connected to Google Calendar";
+"Google Calendar not configured. Add Client ID and Secret in Settings." = "Google Calendar not configured. Add Client ID and Secret in Settings.";
+"Sign-in failed" = "Sign-in failed";
+"No authorization code received. You can close this tab." = "No authorization code received. You can close this tab.";
+"Signed in!" = "Signed in!";
+"You can close this tab and return to LidIA." = "You can close this tab and return to LidIA.";
+"Enable Slack Integration" = "Enable Slack Integration";
+"Create a Slack App with chat:write scope. Install to your workspace and paste the Bot User OAuth Token here." = "Create a Slack App with chat:write scope. Install to your workspace and paste the Bot User OAuth Token here.";
+"Channel (e.g. #meeting-notes)" = "Channel (e.g. #meeting-notes)";
+"Enable n8n Integration" = "Enable n8n Integration";
+"Webhook URL" = "Webhook URL";
+"n8n Webhook" = "n8n Webhook";
+"JSON payload is sent to this URL after each meeting is processed. n8n handles downstream orchestration (Slack, ClickUp, email, etc.)." = "JSON payload is sent to this URL after each meeting is processed. n8n handles downstream orchestration (Slack, ClickUp, email, etc.).";
+"What to send" = "What to send";
+"Include full transcript" = "Include full transcript";
+"Auto-send after meetings" = "Auto-send after meetings";
+"Notion" = "Notion";
+"Fetch Databases" = "Fetch Databases";
+"Meeting pages use the meeting database. Action item export buttons use the task tracker database." = "Meeting pages use the meeting database. Action item export buttons use the task tracker database.";
+"Add your Notion API key in Settings before exporting action items." = "Add your Notion API key in Settings before exporting action items.";
+"Choose a Notion task tracker database in Settings before exporting action items." = "Choose a Notion task tracker database in Settings before exporting action items.";
+"There are no action items to export." = "There are no action items to export.";
+"Apple Reminders" = "Apple Reminders";
+"Sync Action Items to Reminders" = "Sync Action Items to Reminders";
+"Auto-create after meetings" = "Auto-create after meetings";
+"Enable Sync" = "Enable Sync";
+"Syncs meetings, action items, and files between your devices over your private network." = "Syncs meetings, action items, and files between your devices over your private network.";
+
+/* Settings — Voice */
+"Voice Assistant" = "Voice Assistant";
+"Enable Voice Assistant" = "Enable Voice Assistant";
+"End voice mode" = "End voice mode";
+"Read responses aloud" = "Read responses aloud";
+"Applies to both voice assistant and chat." = "Applies to both voice assistant and chat.";
+"System Voice (free, built-in)" = "System Voice (free, built-in)";
+"OpenAI (requires API key)" = "OpenAI (requires API key)";
+"OpenAI API key required for cloud TTS" = "OpenAI API key required for cloud TTS";
+
+/* Settings — Export */
+"Export path" = "Export path";
+"Confirm destination" = "Confirm destination";
+"Auto-export meetings as Markdown" = "Auto-export meetings as Markdown";
+"Meetings are saved as `.md` files with YAML frontmatter. Compatible with Obsidian, iA Writer, etc." = "Meetings are saved as `.md` files with YAML frontmatter. Compatible with Obsidian, iA Writer, etc.";
+
+/* Settings — MCP / Claude */
+"Connect LidIA to Claude Desktop so Claude can access your meeting data." = "Connect LidIA to Claude Desktop so Claude can access your meeting data.";
+"Copy MCP Config" = "Copy MCP Config";
+"~/Library/Application Support/Claude/claude_desktop_config.json" = "~/Library/Application Support/Claude/claude_desktop_config.json";
+
+/* Settings — Soul & Memory */
+"Soul & Memory" = "Soul & Memory";
+"Edit SOUL.md" = "Edit SOUL.md";
+"View MEMORY.md" = "View MEMORY.md";
+
+/* Import */
+"Import Notes" = "Import Notes";
+"Import Files..." = "Import Files...";
+"Import .md, .mdx, or .txt files as past meetings. Files with YAML frontmatter will have their title and date extracted automatically." = "Import .md, .mdx, or .txt files as past meetings. Files with YAML frontmatter will have their title and date extracted automatically.";
+
+/* Updates */
+"Check for Updates..." = "Check for Updates...";
+"Quit LidIA" = "Quit LidIA";
+
+/* Setup Wizard */
+"Welcome to LidIA" = "Welcome to LidIA";
+"All Set!" = "All Set!";
+"Start Using LidIA" = "Start Using LidIA";
+"Everything runs locally on your Mac. No data leaves your device." = "Everything runs locally on your Mac. No data leaves your device.";
+"LidIA can run entirely on your Mac — your audio and meetings never leave your device." = "LidIA can run entirely on your Mac — your audio and meetings never leave your device.";
+"Automatic (best available)" = "Automatic (best available)";
+"Leave blank to auto-select the best model for your Mac. Examples: large-v3, base, small. Model is downloaded automatically on first use." = "Leave blank to auto-select the best model for your Mac. Examples: large-v3, base, small. Model is downloaded automatically on first use.";
+"Uses Apple's built-in speech recognition. Works for short recordings but degrades on sessions longer than ~1 minute." = "Uses Apple's built-in speech recognition. Works for short recordings but degrades on sessions longer than ~1 minute.";
+"This may take a minute..." = "This may take a minute...";
+
+/* Proactive / Notifications */
+"Morning Digest" = "Morning Digest";
+"Pre-Meeting Prep" = "Pre-Meeting Prep";
+"Post-Meeting Nudge" = "Post-Meeting Nudge";
+"Prep Notification (5 min before)" = "Prep Notification (5 min before)";
+"Quiet hours" = "Quiet hours";
+"Morning digests, prep nudges, and action item reminders are suppressed during quiet hours." = "Morning digests, prep nudges, and action item reminders are suppressed during quiet hours.";
+"Weekly Digest" = "Weekly Digest";
+"Weekly Meeting Digest" = "Weekly Meeting Digest";
+"View in LidIA" = "View in LidIA";
+"Meeting Follow-Up" = "Meeting Follow-Up";
+"Add quick notes or retry processing in LidIA." = "Add quick notes or retry processing in LidIA.";
+"Open LidIA for details." = "Open LidIA for details.";
+"Open LidIA for the latest notes and context." = "Open LidIA for the latest notes and context.";
+"Open Settings" = "Open Settings";
+"Open Settings..." = "Open Settings...";
+
+/* Voice Assistant States */
+"Unmute" = "Unmute";
+"Mute" = "Mute";
+"Muted" = "Muted";
+"Tap to start" = "Tap to start";
+"Listening — tap to send" = "Listening — tap to send";
+"Speaking..." = "Speaking...";
+"Sorry, I had trouble with that." = "Sorry, I had trouble with that.";
+
+/* Languages */
+"Arabic" = "Arabic";
+"Chinese (Simplified)" = "Chinese (Simplified)";
+"Chinese (Traditional)" = "Chinese (Traditional)";
+"Dutch" = "Dutch";
+"English (UK)" = "English (UK)";
+"English (US)" = "English (US)";
+"French" = "French";
+"German" = "German";
+"Hindi" = "Hindi";
+"Italian" = "Italian";
+"Japanese" = "Japanese";
+"Korean" = "Korean";
+"Polish" = "Polish";
+"Portuguese (Brazil)" = "Portuguese (Brazil)";
+"Portuguese (Portugal)" = "Portuguese (Portugal)";
+"Russian" = "Russian";
+"Spanish" = "Spanish";
+"Spanish (Latin America)" = "Spanish (Latin America)";
+"Swedish" = "Swedish";
+"Turkish" = "Turkish";
+
+/* Views — Additional */
+"All People" = "All People";
+"Close chat" = "Close chat";
+"Open chat" = "Open chat";
+"Stop dictation" = "Stop dictation";
+"Voice input" = "Voice input";
+"Full screen" = "Full screen";
+"Close (Esc)" = "Close (Esc)";
+"Hide Advanced Models" = "Hide Advanced Models";
+"Meeting" = "Meeting";
+"You" = "You";
+"Untitled Meeting" = "Untitled Meeting";
+"Others" = "Others";
+"No People Yet" = "No People Yet";
+"Remove from favorites" = "Remove from favorites";
+"Add to favorites" = "Add to favorites";
+"Met today" = "Met today";
+"Last met yesterday" = "Last met yesterday";
+"All on track" = "All on track";
+"Today" = "Today";
+"Tomorrow" = "Tomorrow";
+"Delete Meeting" = "Delete Meeting";
+"Delete Meeting?" = "Delete Meeting?";
+"No chats yet" = "No chats yet";
+"Delete Chat" = "Delete Chat";
+"No messages yet" = "No messages yet";
+"Stopping" = "Stopping";
+
+/* Settings — Additional */
+"Theme" = "Theme";
+"Personality" = "Personality";
+"Import Preview" = "Import Preview";
+"Engine" = "Engine";
+"Language" = "Language";
+"Provider" = "Provider";
+"Active Model" = "Active Model";
+"Default Model" = "Default Model";
+"Query Model" = "Query Model";
+"Summary Model" = "Summary Model";
+"Model Routing (Advanced)" = "Model Routing (Advanced)";
+"Fallback Provider" = "Fallback Provider";
+"OpenAI API Key" = "OpenAI API Key";
+"Anthropic API Key" = "Anthropic API Key";
+"Cerebras API Key" = "Cerebras API Key";
+"DeepSeek API Key" = "DeepSeek API Key";
+"NVIDIA API Key" = "NVIDIA API Key";
+"Audio Capture" = "Audio Capture";
+"Text-to-Speech" = "Text-to-Speech";
+"TTS Model" = "TTS Model";
+"Voice" = "Voice";
+"Google Calendar" = "Google Calendar";
+"Apple Calendar & Reminders" = "Apple Calendar & Reminders";
+"Minutes Before" = "Minutes Before";
+"Proactive Assistant" = "Proactive Assistant";
+"Digest Time" = "Digest Time";
+"Frequency" = "Frequency";
+"Quiet Hours Start" = "Quiet Hours Start";
+"Quiet Hours End" = "Quiet Hours End";
+"Meeting Detection" = "Meeting Detection";
+"Device Sync" = "Device Sync";
+"Auth Token" = "Auth Token";
+"Meeting Database" = "Meeting Database";
+"Task Tracker Database" = "Task Tracker Database";
+"API Key" = "API Key";
+"Claude MCP" = "Claude MCP";
+"Binary Path" = "Binary Path";
+"Config Path" = "Config Path";
+"Slack" = "Slack";
+"Bot Token" = "Bot Token";
+"Markdown Vault" = "Markdown Vault";
+"Auth Header (optional)" = "Auth Header (optional)";
+
+/* Action Items — Additional */
+"No Action Items" = "No Action Items";
+"Scope" = "Scope";
+"Priority" = "Priority";
+"Sending..." = "Sending...";
+"Send Visible to Notion" = "Send Visible to Notion";
+"Send All Confirmed" = "Send All Confirmed";
+"OK" = "OK";
+"Dispatch" = "Dispatch";
+"Notion Export" = "Notion Export";
+"Source Data" = "Source Data";
+"Mark incomplete" = "Mark incomplete";
+"Mark complete" = "Mark complete";
+"Clear deadline" = "Clear deadline";
+"Clear" = "Clear";
+"Action Item" = "Action Item";
+"ClickUp" = "ClickUp";
+"Reminder" = "Reminder";
+"n8n" = "n8n";
+"Confirm destination" = "Confirm destination";
+
+/* Templates — Additional */
+"Generating preview..." = "Generating preview...";
+"No transcript available for this meeting." = "No transcript available for this meeting.";
+"Preview prompt" = "Preview prompt";
+"Delete Template" = "Delete Template";
+
+/* Setup — Additional */
+"Download Selected Models" = "Download Selected Models";
+"Continue Without Local Models" = "Continue Without Local Models";
+"Parakeet TDT 0.6B" = "Parakeet TDT 0.6B";
+
+/* Calendar — Additional */
+"Starting now" = "Starting now";
+"Client ID" = "Client ID";
+"Client Secret" = "Client Secret";
+"Items to create" = "Items to create";

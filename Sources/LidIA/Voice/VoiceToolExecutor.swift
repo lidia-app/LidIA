@@ -125,8 +125,31 @@ struct VoiceToolExecutor {
            or any persistent instruction about how you should act. This is YOUR personality —
            things like "be funnier", "respond in Spanish", "don't use emojis".
 
+        10. Get a summary of a recent or specific meeting:
+            <tool>{"action":"get_meeting_summary","meeting":"partial title match or null for most recent"}</tool>
+
+        11. List upcoming meetings:
+            <tool>{"action":"get_next_meetings","count":3}</tool>
+
+        12. Search past meetings:
+            <tool>{"action":"search_meetings","query":"search term"}</tool>
+
+        13. Prepare for an upcoming meeting (attendee history, past action items, talking points):
+            <tool>{"action":"prepare_meeting","meeting":"partial title match"}</tool>
+
+        14. Run a recipe on a meeting:
+            <tool>{"action":"run_recipe","recipe":"Coach Me","meeting":"partial title match or null for most recent"}</tool>
+            Available recipes: Coach Me, Write a Brief, Follow-up Email, Extract Decisions, Executive Summary, Action Plan
+
+        15. Look up a person and their meeting history:
+            <tool>{"action":"lookup_person","name":"person name"}</tool>
+            Use this when the user asks about a specific person — what they discussed, past meetings, open action items with them.
+
         When matching by title, use a substring that uniquely identifies the item. \
         If the user's request is ambiguous, ask for clarification instead of guessing.
+
+        Si el usuario habla en español, responde en español. Usa las mismas herramientas — \
+        los nombres de las acciones son siempre en inglés pero tu respuesta al usuario debe ser en su idioma.
         """
 
     // MARK: - Parse + Execute
@@ -227,6 +250,18 @@ struct VoiceToolExecutor {
             return saveMemory(call)
         case "update_soul":
             return updateSoul(call)
+        case "get_meeting_summary":
+            return getMeetingSummary(call, in: context)
+        case "get_next_meetings":
+            return getNextMeetings(call, in: context)
+        case "search_meetings":
+            return searchMeetings(call, in: context)
+        case "prepare_meeting":
+            return prepareMeeting(call, in: context)
+        case "run_recipe":
+            return runRecipe(call, in: context)
+        case "lookup_person":
+            return lookupPerson(call, in: context)
         default:
             logger.warning("Unknown voice tool action: \(action)")
             return "Unknown action: \(action)"
@@ -396,6 +431,235 @@ struct VoiceToolExecutor {
 
         logger.info("Voice tool: updated soul — \(instruction)")
         return "Soul updated: \(instruction)"
+    }
+
+    // MARK: - Meeting Query Tools
+
+    private static func getMeetingSummary(_ call: [String: Any], in context: ModelContext) -> String {
+        let meeting: Meeting?
+        if let titleMatch = call["meeting"] as? String {
+            meeting = findMeeting(titleMatch, in: context)
+        } else {
+            // Most recent completed meeting
+            meeting = fetchMostRecentMeeting(in: context)
+        }
+        guard let meeting else { return "No matching meeting found." }
+        let summary = (meeting.userEditedSummary ?? meeting.summary)
+        let preview = summary.isEmpty ? "(no summary available)" : String(summary.prefix(500))
+        let dateStr = meeting.date.formatted(date: .abbreviated, time: .shortened)
+        return "Meeting: \(meeting.title) (\(dateStr))\n\(preview)"
+    }
+
+    private static func getNextMeetings(_ call: [String: Any], in context: ModelContext) -> String {
+        let count = (call["count"] as? Int) ?? 3
+        do {
+            let now = Date.now
+            let descriptor = FetchDescriptor<Meeting>(
+                predicate: #Predicate { $0.date > now },
+                sortBy: [SortDescriptor(\Meeting.date, order: .forward)]
+            )
+            var meetings = try context.fetch(descriptor)
+            meetings = Array(meetings.prefix(count))
+            if meetings.isEmpty { return "No upcoming meetings found." }
+            return meetings.map { m in
+                let dateStr = m.date.formatted(date: .abbreviated, time: .shortened)
+                let attendees = m.calendarAttendees?.joined(separator: ", ") ?? "no attendees"
+                return "- \(m.title) — \(dateStr) (\(attendees))"
+            }.joined(separator: "\n")
+        } catch {
+            logger.error("Failed to fetch upcoming meetings: \(error)")
+            return "Error fetching upcoming meetings."
+        }
+    }
+
+    private static func searchMeetings(_ call: [String: Any], in context: ModelContext) -> String {
+        guard let query = call["query"] as? String, !query.isEmpty else {
+            return "Missing search query."
+        }
+        let queryLower = query.lowercased()
+        do {
+            let descriptor = FetchDescriptor<Meeting>(
+                sortBy: [SortDescriptor(\Meeting.date, order: .reverse)]
+            )
+            let all = try context.fetch(descriptor)
+            let matches = all.filter { m in
+                m.title.lowercased().contains(queryLower) ||
+                (m.userEditedSummary ?? m.summary).lowercased().contains(queryLower)
+            }
+            let top = Array(matches.prefix(3))
+            if top.isEmpty { return "No meetings matching '\(query)'." }
+            return top.map { m in
+                let dateStr = m.date.formatted(date: .abbreviated, time: .shortened)
+                let summary = (m.userEditedSummary ?? m.summary)
+                let preview = summary.isEmpty ? "(no summary)" : String(summary.prefix(150))
+                return "- \(m.title) (\(dateStr)): \(preview)"
+            }.joined(separator: "\n\n")
+        } catch {
+            logger.error("Failed to search meetings: \(error)")
+            return "Error searching meetings."
+        }
+    }
+
+    private static func prepareMeeting(_ call: [String: Any], in context: ModelContext) -> String {
+        guard let titleMatch = call["meeting"] as? String else { return "Missing meeting title." }
+        guard let meeting = findMeeting(titleMatch, in: context) else {
+            return "No meeting matching '\(titleMatch)'."
+        }
+
+        var parts: [String] = []
+        let dateStr = meeting.date.formatted(date: .abbreviated, time: .shortened)
+        parts.append("Preparing for: \(meeting.title) — \(dateStr)")
+
+        let attendees = meeting.calendarAttendees ?? []
+        if !attendees.isEmpty {
+            parts.append("Attendees: \(attendees.joined(separator: ", "))")
+        }
+
+        // Find past meetings with overlapping attendees
+        if !attendees.isEmpty {
+            let attendeesLower = Set(attendees.map { $0.lowercased() })
+            do {
+                let descriptor = FetchDescriptor<Meeting>(
+                    sortBy: [SortDescriptor(\Meeting.date, order: .reverse)]
+                )
+                let all = try context.fetch(descriptor)
+                let pastWithSameAttendees = all.filter { m in
+                    guard m.id != meeting.id, m.date < Date.now else { return false }
+                    let mAttendees = Set((m.calendarAttendees ?? []).map { $0.lowercased() })
+                    return !mAttendees.isDisjoint(with: attendeesLower)
+                }
+                let recentPast = Array(pastWithSameAttendees.prefix(3))
+                if !recentPast.isEmpty {
+                    parts.append("\nPast meetings with these attendees:")
+                    for m in recentPast {
+                        let d = m.date.formatted(date: .abbreviated, time: .omitted)
+                        parts.append("- \(m.title) (\(d))")
+                    }
+                }
+
+                // Open action items for those attendees
+                let actionDescriptor = FetchDescriptor<ActionItem>(
+                    predicate: #Predicate { !$0.isCompleted }
+                )
+                let openItems = try context.fetch(actionDescriptor)
+                let relevantItems = openItems.filter { item in
+                    guard let assignee = item.assignee else { return false }
+                    return attendeesLower.contains(assignee.lowercased())
+                }
+                if !relevantItems.isEmpty {
+                    parts.append("\nOpen action items for attendees:")
+                    for item in relevantItems.prefix(5) {
+                        let assignee = item.assignee ?? "unassigned"
+                        parts.append("- [\(assignee)] \(item.title)")
+                    }
+                }
+            } catch {
+                logger.error("Failed to prepare meeting: \(error)")
+            }
+        }
+
+        return parts.joined(separator: "\n")
+    }
+
+    private static func runRecipe(_ call: [String: Any], in context: ModelContext) -> String {
+        guard let recipeName = call["recipe"] as? String, !recipeName.isEmpty else {
+            return "Missing recipe name."
+        }
+        let validRecipes = ["Coach Me", "Write a Brief", "Follow-up Email",
+                            "Extract Decisions", "Executive Summary", "Action Plan"]
+        let matched = validRecipes.first { $0.lowercased() == recipeName.lowercased() }
+        guard let recipe = matched else {
+            return "Unknown recipe '\(recipeName)'. Available: \(validRecipes.joined(separator: ", "))"
+        }
+
+        let meeting: Meeting?
+        if let titleMatch = call["meeting"] as? String {
+            meeting = findMeeting(titleMatch, in: context)
+        } else {
+            meeting = fetchMostRecentMeeting(in: context)
+        }
+        guard let meeting else { return "No matching meeting found." }
+
+        logger.info("Voice tool: recipe '\(recipe)' queued for '\(meeting.title)'")
+        return "Recipe '\(recipe)' queued for \(meeting.title). It will run in the meeting detail view."
+    }
+
+    private static func lookupPerson(_ call: [String: Any], in context: ModelContext) -> String {
+        guard let name = call["name"] as? String, !name.isEmpty else {
+            return "Missing person name."
+        }
+        let nameLower = name.lowercased()
+        do {
+            let descriptor = FetchDescriptor<Meeting>(
+                sortBy: [SortDescriptor(\Meeting.date, order: .reverse)]
+            )
+            let allMeetings = try context.fetch(descriptor)
+
+            // Find meetings where any attendee matches the name (case-insensitive partial match)
+            let matchingMeetings = allMeetings.filter { meeting in
+                guard let attendees = meeting.calendarAttendees else { return false }
+                return attendees.contains { attendee in
+                    let parsed = RelationshipStore.parseAttendee(attendee)
+                    let displayName = parsed.displayName ?? ""
+                    let email = parsed.email ?? ""
+                    let emailName = RelationshipStore.displayNameFromEmail(email)
+                    return displayName.lowercased().contains(nameLower)
+                        || emailName.lowercased().contains(nameLower)
+                        || email.lowercased().contains(nameLower)
+                }
+            }
+
+            guard !matchingMeetings.isEmpty else {
+                return "No meetings found with '\(name)'."
+            }
+
+            var parts: [String] = ["Found \(matchingMeetings.count) meeting\(matchingMeetings.count == 1 ? "" : "s") with \(name):"]
+
+            for meeting in matchingMeetings.prefix(5) {
+                let dateStr = meeting.date.formatted(date: .abbreviated, time: .omitted)
+                let totalItems = meeting.actionItems.count
+                let openItems = meeting.actionItems.filter { !$0.isCompleted }.count
+                var line = "- \(meeting.title) (\(dateStr))"
+                if totalItems > 0 {
+                    line += " — \(totalItems) action item\(totalItems == 1 ? "" : "s"), \(openItems) open"
+                }
+                parts.append(line)
+            }
+
+            if let lastMet = matchingMeetings.first {
+                let dateStr = lastMet.date.formatted(date: .abbreviated, time: .omitted)
+                parts.append("Last met: \(dateStr)")
+            }
+
+            // Gather open action items across all matching meetings
+            let openItems = matchingMeetings.flatMap(\.actionItems).filter { !$0.isCompleted }
+            if !openItems.isEmpty {
+                parts.append("Open items with \(name):")
+                for item in openItems.prefix(5) {
+                    parts.append("  - \(item.title)")
+                }
+            }
+
+            return parts.joined(separator: "\n")
+        } catch {
+            logger.error("Failed to lookup person: \(error)")
+            return "Error looking up person."
+        }
+    }
+
+    private static func fetchMostRecentMeeting(in context: ModelContext) -> Meeting? {
+        do {
+            let now = Date.now
+            let descriptor = FetchDescriptor<Meeting>(
+                predicate: #Predicate { $0.date <= now },
+                sortBy: [SortDescriptor(\Meeting.date, order: .reverse)]
+            )
+            let results = try context.fetch(descriptor)
+            return results.first
+        } catch {
+            logger.error("Failed to fetch most recent meeting: \(error)")
+            return nil
+        }
     }
 
     // MARK: - Lookup Helpers

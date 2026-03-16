@@ -18,6 +18,9 @@ final class RecordingSettings {
     var displayName: String = "" {
         didSet { saveDefault(displayName, forKey: "displayName") }
     }
+    var noiseReductionEnabled: Bool = false {
+        didSet { saveDefault(noiseReductionEnabled, forKey: "noiseReductionEnabled") }
+    }
 
     // MARK: - Init
 
@@ -37,6 +40,7 @@ final class RecordingSettings {
         if let name = defaults.string(forKey: "displayName") {
             displayName = name
         }
+        noiseReductionEnabled = defaults.bool(forKey: "noiseReductionEnabled")
     }
 
     // MARK: - Persistence Helpers

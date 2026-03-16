@@ -47,23 +47,35 @@ actor AnthropicClient: LLMClient {
     }
 
     func listModels() async throws -> [String] {
-        let url = baseURL.appendingPathComponent("v1/models")
-        var urlRequest = URLRequest(url: url)
-        urlRequest.timeoutInterval = timeoutInterval
-        urlRequest.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        urlRequest.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        let request = urlRequest
+        // Try API first with required beta header
+        do {
+            let url = baseURL.appendingPathComponent("v1/models")
+            var urlRequest = URLRequest(url: url)
+            urlRequest.timeoutInterval = timeoutInterval
+            urlRequest.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+            urlRequest.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+            urlRequest.setValue("models-2025-04-15", forHTTPHeaderField: "anthropic-beta")
+            let request = urlRequest
 
-        let (data, response) = try await withRetry {
-            try await URLSession.shared.data(for: request)
+            let (data, response) = try await withRetry {
+                try await URLSession.shared.data(for: request)
+            }
+            try validateResponse(response, data: data)
+
+            let modelsResponse = try JSONDecoder().decode(AnthropicModelsResponse.self, from: data)
+            return modelsResponse.data
+                .map(\.id)
+                .filter { $0.hasPrefix("claude") }
+                .sorted()
+        } catch {
+            // Fallback to known models if API fails
+            return [
+                "claude-opus-4-6",
+                "claude-sonnet-4-6",
+                "claude-haiku-4-5-20251001",
+                "claude-sonnet-4-5-20250514",
+            ]
         }
-        try validateResponse(response, data: data)
-
-        let modelsResponse = try JSONDecoder().decode(AnthropicModelsResponse.self, from: data)
-        return modelsResponse.data
-            .map(\.id)
-            .filter { $0.hasPrefix("claude") }
-            .sorted()
     }
 
     func chat(messages: [LLMChatMessage], model: String, format: LLMResponseFormat?) async throws -> String {

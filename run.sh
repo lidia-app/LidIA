@@ -94,7 +94,18 @@ if [ -d "${MLX_METAL_DIR}" ]; then
     fi
 fi
 
-# 6. Copy LidiaMCP binary alongside the main executable
+# 6. Embed Sparkle.framework (dynamic framework must be in Contents/Frameworks/)
+FRAMEWORKS="${CONTENTS}/Frameworks"
+SPARKLE_FW="${BIN_PATH}/Sparkle.framework"
+if [ -d "${SPARKLE_FW}" ]; then
+    echo "==> Embedding Sparkle.framework..."
+    mkdir -p "${FRAMEWORKS}"
+    cp -R "${SPARKLE_FW}" "${FRAMEWORKS}/"
+    # Add @executable_path/../Frameworks to rpath so dyld can find it
+    install_name_tool -add_rpath "@executable_path/../Frameworks" "${MACOS}/LidIA" 2>/dev/null || true
+fi
+
+# 6b. Copy LidiaMCP binary alongside the main executable
 if [ -f "${BIN_PATH}/LidiaMCP" ]; then
     cp "${BIN_PATH}/LidiaMCP" "${MACOS}/LidiaMCP"
 fi
@@ -105,9 +116,16 @@ fi
 SIGN_IDENTITY=$(security find-identity -v -p codesigning 2>/dev/null | head -1 | sed 's/.*"\(.*\)"/\1/' || echo "")
 if [ -n "${SIGN_IDENTITY}" ] && [ "${SIGN_IDENTITY}" != "" ]; then
     echo "==> Code signing with: ${SIGN_IDENTITY}"
+    # Sign embedded frameworks first
+    if [ -d "${FRAMEWORKS}" ]; then
+        find "${FRAMEWORKS}" -name "*.framework" -exec codesign --force --sign "${SIGN_IDENTITY}" {} \; 2>/dev/null || true
+    fi
     codesign --force --sign "${SIGN_IDENTITY}" --entitlements "${ENTITLEMENTS}" --generate-entitlement-der "${APP_DIR}"
 else
     echo "==> Code signing (ad-hoc — permissions may reset on rebuild)..."
+    if [ -d "${FRAMEWORKS}" ]; then
+        find "${FRAMEWORKS}" -name "*.framework" -exec codesign --force --sign - {} \; 2>/dev/null || true
+    fi
     codesign --force --sign - --entitlements "${ENTITLEMENTS}" "${APP_DIR}"
 fi
 

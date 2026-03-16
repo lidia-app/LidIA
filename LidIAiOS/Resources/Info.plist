@@ -15,7 +15,14 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>LidIA uses the microphone for voice commands and queries about your meetings.</string>
+	<string>LidIA uses the microphone for voice notes and voice commands about your meetings.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>LidIA uses speech recognition to transcribe your voice notes on-device.</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

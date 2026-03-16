@@ -14,7 +14,8 @@ final class MenuBarController: NSObject {
         googleCalendarMonitor: GoogleCalendarMonitor,
         meetingDetector: MeetingDetector,
         settings: AppSettings,
-        modelContainer: ModelContainer
+        modelContainer: ModelContainer,
+        updateController: UpdateController
     ) {
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
@@ -35,6 +36,7 @@ final class MenuBarController: NSObject {
             .environment(googleCalendarMonitor)
             .environment(meetingDetector)
             .environment(settings)
+            .environment(updateController)
             .modelContainer(modelContainer)
 
         popover.contentViewController = NSHostingController(rootView: menuBarView)

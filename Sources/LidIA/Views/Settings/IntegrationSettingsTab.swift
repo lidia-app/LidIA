@@ -2,6 +2,7 @@ import SwiftUI
 
 struct IntegrationSettingsTab: View {
     @Bindable var settings: AppSettings
+    @State private var mcpJustInstalled = false
 
     var body: some View {
         // Device Sync
@@ -61,34 +62,54 @@ struct IntegrationSettingsTab: View {
 
         // Claude MCP
         DisclosureGroup("Claude MCP") {
-            Text("Connect LidIA to Claude Desktop so Claude can access your meeting data.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            let configPath = NSString(string: "~/Library/Application Support/Claude/claude_desktop_config.json").expandingTildeInPath
+            let claudeDir = NSString(string: "~/Library/Application Support/Claude").expandingTildeInPath
+            let isClaudeInstalled = FileManager.default.fileExists(atPath: claudeDir)
+            let mcpBinaryPath = Bundle.main.bundlePath + "/Contents/MacOS/LidiaMCP"
+            let isMCPInstalled = checkMCPInstalled(configPath: configPath)
 
-            let execPath = Bundle.main.executableURL?
-                .deletingLastPathComponent()
-                .appendingPathComponent("LidiaMCP")
-                .path ?? "/path/to/LidiaMCP"
+            if !isClaudeInstalled {
+                Label("Claude Desktop not found", systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+                    .font(.caption)
 
-            LabeledContent("Binary Path") {
-                Text(execPath)
-                    .font(.caption.monospaced())
-                    .textSelection(.enabled)
+                Text("Install Claude Desktop first, then return here to connect LidIA.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else if isMCPInstalled {
+                Label("MCP connected to Claude Desktop", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .font(.caption)
+
+                Button("Uninstall MCP") {
+                    uninstallMCP(configPath: configPath)
+                }
+                .buttonStyle(.glass)
+            } else {
+                Text("Connect LidIA to Claude Desktop so Claude can query your meeting data.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button("Install MCP") {
+                    print("[MCP] Installing with binary path: \(mcpBinaryPath)")
+                    installMCP(configPath: configPath, binaryPath: mcpBinaryPath)
+                    mcpJustInstalled = true
+                }
+                .buttonStyle(.glassProminent)
             }
 
-            LabeledContent("Config Path") {
-                Text("~/Library/Application Support/Claude/claude_desktop_config.json")
-                    .font(.caption.monospaced())
-                    .textSelection(.enabled)
+            if mcpJustInstalled {
+                Label("Restart Claude Desktop to activate", systemImage: "arrow.clockwise")
+                    .foregroundStyle(.orange)
+                    .font(.caption)
             }
 
-            Button("Copy MCP Config") {
+            Button("Copy Config to Clipboard") {
                 let config = """
                 {
                   "mcpServers": {
                     "lidia": {
-                      "command": "\(execPath)",
-                      "args": []
+                      "command": "\(mcpBinaryPath)"
                     }
                   }
                 }
@@ -124,6 +145,39 @@ struct IntegrationSettingsTab: View {
             }
         }
 
+        // Markdown Vault
+        DisclosureGroup("Markdown Vault") {
+            Toggle("Auto-export meetings as Markdown", isOn: $settings.vaultExportEnabled)
+
+            if settings.vaultExportEnabled {
+                HStack {
+                    TextField("Export path", text: $settings.vaultExportPath)
+                        .textFieldStyle(.roundedBorder)
+                    Button("Choose...") {
+                        let panel = NSOpenPanel()
+                        panel.canChooseDirectories = true
+                        panel.canChooseFiles = false
+                        panel.canCreateDirectories = true
+                        if panel.runModal() == .OK, let url = panel.url {
+                            settings.vaultExportPath = url.path
+                        }
+                    }
+                }
+                Toggle("Include full transcript", isOn: $settings.vaultExportIncludeTranscript)
+                Text("Meetings are saved as `.md` files with YAML frontmatter. Compatible with Obsidian, iA Writer, etc.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+
+        // Autopilot
+        DisclosureGroup("Autopilot") {
+            Toggle("Auto-dispatch action items", isOn: $settings.autopilotEnabled)
+            Text("Automatically send action items to their suggested destinations (ClickUp, Notion, Reminders, n8n) after each meeting. Items are dispatched based on AI-suggested destinations.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+
         // n8n
         DisclosureGroup("n8n Webhook") {
             Toggle("Enable n8n Integration", isOn: $settings.n8nEnabled)
@@ -147,6 +201,41 @@ struct IntegrationSettingsTab: View {
                     Toggle("Full Transcript", isOn: $settings.n8nSendTranscript)
                 }
             }
+        }
+    }
+
+    private func checkMCPInstalled(configPath: String) -> Bool {
+        guard let data = FileManager.default.contents(atPath: configPath),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let servers = json["mcpServers"] as? [String: Any] else { return false }
+        return servers["lidia"] != nil
+    }
+
+    private func installMCP(configPath: String, binaryPath: String) {
+        var config: [String: Any] = [:]
+        if let data = FileManager.default.contents(atPath: configPath),
+           let existing = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            config = existing
+        }
+        var servers = config["mcpServers"] as? [String: Any] ?? [:]
+        servers["lidia"] = ["command": binaryPath]
+        config["mcpServers"] = servers
+
+        if let data = try? JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys]) {
+            let dir = (configPath as NSString).deletingLastPathComponent
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            try? data.write(to: URL(fileURLWithPath: configPath))
+        }
+    }
+
+    private func uninstallMCP(configPath: String) {
+        guard let data = FileManager.default.contents(atPath: configPath),
+              var config = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              var servers = config["mcpServers"] as? [String: Any] else { return }
+        servers.removeValue(forKey: "lidia")
+        config["mcpServers"] = servers
+        if let updatedData = try? JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys]) {
+            try? updatedData.write(to: URL(fileURLWithPath: configPath))
         }
     }
 

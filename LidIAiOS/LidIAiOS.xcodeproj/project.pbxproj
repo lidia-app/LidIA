@@ -7,26 +7,34 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0F4AB22E740B39FACA7C9152 /* iOSChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80CCE51AAB19414130561F61 /* iOSChatView.swift */; };
 		12A37A85E0E35F97D4441C94 /* LidIAiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB005D9B8F99BDA0C84B2AF2 /* LidIAiOSApp.swift */; };
 		146D488C7B6EC00A305BE767 /* VoiceModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA39D2A0B30B4AEFF6A813B /* VoiceModeView.swift */; };
 		19431215EC200D4AB6A41B27 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA6B8F4E4BA0BCD167321875 /* Assets.xcassets */; };
-		47CA95A57DCB25B6C6D83D09 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8614E043CDF93B4A281968BE /* DashboardView.swift */; };
+		6D739D9894412BC683EC1E3E /* VoiceNoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2C9D6C54D9C8A7672F8D0D /* VoiceNoteSheet.swift */; };
+		765BBDA0A5BF4EAA7A90694C /* MeetingCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73B507380C1EBBD92FC8C2A /* MeetingCardView.swift */; };
+		81E31602B002925D2145CC28 /* ActionItemsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737102E13B888AF58DCAFE39 /* ActionItemsTab.swift */; };
 		915AB69B1A3DB08D15F01E07 /* iOSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF7FE3427846372723EFE8A /* iOSSettingsView.swift */; };
+		A2221C1F126871BF1930C43F /* SettingsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A551887EB84433B2D5D60DB /* SettingsTab.swift */; };
 		C37396A489DC38953FAFB425 /* iOSSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB8CB3FA44A6D76EBE5F076 /* iOSSettings.swift */; };
+		D106818864707155E4BC9D84 /* HomeTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FFBDDB3E7ACDB076CCC8239 /* HomeTab.swift */; };
 		E047DD7384ABB74077CB4F93 /* iOSRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5562579CC4FBB49848A2BA /* iOSRootView.swift */; };
 		E124502CAC2B2DE336FF3EFB /* MeetingDetailiOSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEA2E187FF25153A497A19E /* MeetingDetailiOSView.swift */; };
+		E32E767A4AD32D0DA9AEBBA0 /* ChatTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0211FD74968470D8A13C7CF9 /* ChatTab.swift */; };
 		E718CF24F3BFDAB659BE0555 /* LidIAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4B5631ADBD3C054EFE047698 /* LidIAKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0211FD74968470D8A13C7CF9 /* ChatTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatTab.swift; sourceTree = "<group>"; };
 		3A51A6AF7E20BE7198D67807 /* LidIAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = LidIAKit; path = ../Packages/LidIAKit; sourceTree = SOURCE_ROOT; };
 		4EA39D2A0B30B4AEFF6A813B /* VoiceModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceModeView.swift; sourceTree = "<group>"; };
+		4FFBDDB3E7ACDB076CCC8239 /* HomeTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTab.swift; sourceTree = "<group>"; };
+		5A551887EB84433B2D5D60DB /* SettingsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTab.swift; sourceTree = "<group>"; };
 		5FF7FE3427846372723EFE8A /* iOSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettingsView.swift; sourceTree = "<group>"; };
 		6FB8CB3FA44A6D76EBE5F076 /* iOSSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettings.swift; sourceTree = "<group>"; };
+		737102E13B888AF58DCAFE39 /* ActionItemsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionItemsTab.swift; sourceTree = "<group>"; };
 		7D5562579CC4FBB49848A2BA /* iOSRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSRootView.swift; sourceTree = "<group>"; };
-		80CCE51AAB19414130561F61 /* iOSChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSChatView.swift; sourceTree = "<group>"; };
-		8614E043CDF93B4A281968BE /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		AC2C9D6C54D9C8A7672F8D0D /* VoiceNoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceNoteSheet.swift; sourceTree = "<group>"; };
+		B73B507380C1EBBD92FC8C2A /* MeetingCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingCardView.swift; sourceTree = "<group>"; };
 		B9CFCAF2C254481CD978CB60 /* LidIAiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LidIAiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BAEA2E187FF25153A497A19E /* MeetingDetailiOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingDetailiOSView.swift; sourceTree = "<group>"; };
 		CA6B8F4E4BA0BCD167321875 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -82,14 +90,18 @@
 		FE007BE547288930B08B08AC /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				8614E043CDF93B4A281968BE /* DashboardView.swift */,
-				80CCE51AAB19414130561F61 /* iOSChatView.swift */,
+				737102E13B888AF58DCAFE39 /* ActionItemsTab.swift */,
+				0211FD74968470D8A13C7CF9 /* ChatTab.swift */,
+				4FFBDDB3E7ACDB076CCC8239 /* HomeTab.swift */,
 				7D5562579CC4FBB49848A2BA /* iOSRootView.swift */,
 				6FB8CB3FA44A6D76EBE5F076 /* iOSSettings.swift */,
 				5FF7FE3427846372723EFE8A /* iOSSettingsView.swift */,
 				EB005D9B8F99BDA0C84B2AF2 /* LidIAiOSApp.swift */,
+				B73B507380C1EBBD92FC8C2A /* MeetingCardView.swift */,
 				BAEA2E187FF25153A497A19E /* MeetingDetailiOSView.swift */,
+				5A551887EB84433B2D5D60DB /* SettingsTab.swift */,
 				4EA39D2A0B30B4AEFF6A813B /* VoiceModeView.swift */,
+				AC2C9D6C54D9C8A7672F8D0D /* VoiceNoteSheet.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -168,11 +180,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				47CA95A57DCB25B6C6D83D09 /* DashboardView.swift in Sources */,
+				81E31602B002925D2145CC28 /* ActionItemsTab.swift in Sources */,
+				E32E767A4AD32D0DA9AEBBA0 /* ChatTab.swift in Sources */,
+				D106818864707155E4BC9D84 /* HomeTab.swift in Sources */,
 				12A37A85E0E35F97D4441C94 /* LidIAiOSApp.swift in Sources */,
+				765BBDA0A5BF4EAA7A90694C /* MeetingCardView.swift in Sources */,
 				E124502CAC2B2DE336FF3EFB /* MeetingDetailiOSView.swift in Sources */,
+				A2221C1F126871BF1930C43F /* SettingsTab.swift in Sources */,
 				146D488C7B6EC00A305BE767 /* VoiceModeView.swift in Sources */,
-				0F4AB22E740B39FACA7C9152 /* iOSChatView.swift in Sources */,
+				6D739D9894412BC683EC1E3E /* VoiceNoteSheet.swift in Sources */,
 				E047DD7384ABB74077CB4F93 /* iOSRootView.swift in Sources */,
 				C37396A489DC38953FAFB425 /* iOSSettings.swift in Sources */,
 				915AB69B1A3DB08D15F01E07 /* iOSSettingsView.swift in Sources */,
@@ -227,7 +243,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -333,7 +349,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

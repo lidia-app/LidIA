@@ -6,6 +6,20 @@ struct LLMSettingsTab: View {
     @State private var modelFetchError: String?
     @AppStorage("settings.showAdvancedModels") private var showAdvancedModels = false
 
+    // API key validation state
+    @State private var openaiKeyStatus: APIKeyStatus = .untested
+    @State private var anthropicKeyStatus: APIKeyStatus = .untested
+    @State private var cerebrasKeyStatus: APIKeyStatus = .untested
+    @State private var deepseekKeyStatus: APIKeyStatus = .untested
+    @State private var nvidiaKeyStatus: APIKeyStatus = .untested
+
+    private enum APIKeyStatus: Equatable {
+        case untested
+        case testing
+        case valid
+        case invalid(String)
+    }
+
     var body: some View {
         // Transcription
         Section("Transcription") {
@@ -58,6 +72,11 @@ struct LLMSettingsTab: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+            case .graniteSpeech:
+                Text("IBM Granite Speech 4.0 \u{2014} 1B-parameter multilingual model running locally via MLX. Supports English, French, German, Spanish, Portuguese, and Japanese. Batch mode: transcribes after recording stops.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
             case .whisperKit:
                 TextField("Model (blank = auto)", text: $settings.whisperKitModel)
@@ -283,12 +302,8 @@ struct LLMSettingsTab: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            HStack {
-                SecureField("OpenAI API Key", text: $settings.openaiAPIKey)
-                if !settings.openaiAPIKey.isEmpty {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
+            apiKeyRow(label: "OpenAI API Key", key: $settings.openaiAPIKey, status: $openaiKeyStatus) {
+                await testOpenAIKey()
             }
             if settings.llmProvider == .openai {
                 TextField("OpenAI Base URL", text: $settings.openaiBaseURL)
@@ -297,36 +312,20 @@ struct LLMSettingsTab: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack {
-                SecureField("Anthropic API Key", text: $settings.anthropicAPIKey)
-                if !settings.anthropicAPIKey.isEmpty {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
+            apiKeyRow(label: "Anthropic API Key", key: $settings.anthropicAPIKey, status: $anthropicKeyStatus) {
+                await testAnthropicKey()
             }
 
-            HStack {
-                SecureField("Cerebras API Key", text: $settings.cerebrasAPIKey)
-                if !settings.cerebrasAPIKey.isEmpty {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
+            apiKeyRow(label: "Cerebras API Key", key: $settings.cerebrasAPIKey, status: $cerebrasKeyStatus) {
+                await testCerebrasKey()
             }
 
-            HStack {
-                SecureField("DeepSeek API Key", text: $settings.deepseekAPIKey)
-                if !settings.deepseekAPIKey.isEmpty {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
+            apiKeyRow(label: "DeepSeek API Key", key: $settings.deepseekAPIKey, status: $deepseekKeyStatus) {
+                await testDeepSeekKey()
             }
 
-            HStack {
-                SecureField("NVIDIA API Key", text: $settings.nvidiaAPIKey)
-                if !settings.nvidiaAPIKey.isEmpty {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
+            apiKeyRow(label: "NVIDIA API Key", key: $settings.nvidiaAPIKey, status: $nvidiaKeyStatus) {
+                await testNVIDIAKey()
             }
 
             if settings.openaiAPIKey.isEmpty && settings.anthropicAPIKey.isEmpty && settings.cerebrasAPIKey.isEmpty && settings.deepseekAPIKey.isEmpty && settings.nvidiaAPIKey.isEmpty && settings.llmProvider != .mlx && settings.llmProvider != .ollama {
@@ -449,6 +448,111 @@ struct LLMSettingsTab: View {
             settings.availableModels = models
         } catch {
             modelFetchError = "Failed to fetch models: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - API Key Validation
+
+    @ViewBuilder
+    private func apiKeyRow(label: String, key: Binding<String>, status: Binding<APIKeyStatus>, test: @escaping () async -> Void) -> some View {
+        HStack {
+            SecureField(label, text: key)
+            if !key.wrappedValue.isEmpty {
+                switch status.wrappedValue {
+                case .untested:
+                    Button("Test") {
+                        Task { await test() }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
+                    .font(.caption)
+                case .testing:
+                    ProgressView()
+                        .controlSize(.small)
+                case .valid:
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                case .invalid(let message):
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.red)
+                        .help(message)
+                }
+            }
+        }
+        .onChange(of: key.wrappedValue) {
+            status.wrappedValue = .untested
+        }
+    }
+
+    @MainActor
+    private func testOpenAIKey() async {
+        openaiKeyStatus = .testing
+        do {
+            let client = OpenAIClient(
+                apiKey: settings.openaiAPIKey,
+                baseURL: URL(string: settings.openaiBaseURL) ?? URL(string: "https://api.openai.com")!
+            )
+            _ = try await client.listModels()
+            openaiKeyStatus = .valid
+        } catch {
+            openaiKeyStatus = .invalid(error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private func testAnthropicKey() async {
+        anthropicKeyStatus = .testing
+        do {
+            let client = AnthropicClient(apiKey: settings.anthropicAPIKey)
+            _ = try await client.listModels()
+            anthropicKeyStatus = .valid
+        } catch {
+            anthropicKeyStatus = .invalid(error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private func testCerebrasKey() async {
+        cerebrasKeyStatus = .testing
+        do {
+            let client = OpenAIClient(apiKey: settings.cerebrasAPIKey, baseURL: URL(string: "https://api.cerebras.ai/v1")!)
+            _ = try await client.listModels()
+            cerebrasKeyStatus = .valid
+        } catch {
+            cerebrasKeyStatus = .invalid(error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private func testDeepSeekKey() async {
+        deepseekKeyStatus = .testing
+        do {
+            let client = OpenAIClient(apiKey: settings.deepseekAPIKey, baseURL: URL(string: "https://api.deepseek.com/v1")!)
+            _ = try await client.listModels()
+            deepseekKeyStatus = .valid
+        } catch {
+            deepseekKeyStatus = .invalid(error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private func testNVIDIAKey() async {
+        nvidiaKeyStatus = .testing
+        do {
+            let client = OpenAIClient(apiKey: settings.nvidiaAPIKey, baseURL: URL(string: "https://integrate.api.nvidia.com/v1")!, skipModelFilter: true)
+            // NIM may not support /v1/models — try a minimal chat instead
+            let messages = [LLMChatMessage(role: "user", content: "hi")]
+            _ = try await client.chat(messages: messages, model: "nvidia/llama-3.3-70b-instruct", format: nil)
+            nvidiaKeyStatus = .valid
+        } catch let error as LLMError {
+            if case .httpError(let code, _) = error, code == 401 {
+                nvidiaKeyStatus = .invalid("Invalid API key (401 Unauthorized)")
+            } else {
+                // Non-auth errors mean the key worked but something else failed
+                nvidiaKeyStatus = .valid
+            }
+        } catch {
+            nvidiaKeyStatus = .invalid(error.localizedDescription)
         }
     }
 }

@@ -54,15 +54,19 @@ struct HomeView: View {
             .padding(.vertical, 24)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .task {
-            if googleCalendarMonitor.isSignedIn && settings.googleCalendarEnabled {
-                await googleCalendarMonitor.fetchWeek(containing: .now)
-            }
-        }
         .onAppear {
             cachedGroupedPastMeetings = computeGroupedPastMeetings()
             cachedGoogleEvents = computeUpcomingGoogleEvents()
             cachedAppleEvents = computeUpcomingAppleEvents()
+
+            // Only fetch if cache is empty (avoids clearing events on tab switch)
+            if cachedGoogleEvents.isEmpty,
+               googleCalendarMonitor.isSignedIn,
+               settings.googleCalendarEnabled {
+                Task {
+                    await googleCalendarMonitor.fetchWeek(containing: .now)
+                }
+            }
         }
         .onChange(of: googleCalendarMonitor.weekEvents) {
             cachedGoogleEvents = computeUpcomingGoogleEvents()

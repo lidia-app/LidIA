@@ -124,6 +124,51 @@ final class RelationshipStore {
         .sorted { $0.lastMet > $1.lastMet }
     }
 
+    func companies(from meetings: [Meeting]) -> [Company] {
+        var companyMap: [String: Company] = [:]
+
+        for meeting in meetings where meeting.status == .complete {
+            for attendee in meeting.calendarAttendees ?? [] {
+                let parsed = Self.parseAttendee(attendee)
+                guard let email = parsed.email else { continue }
+                guard let domain = email.split(separator: "@").last.map(String.init) else { continue }
+
+                // Skip personal email domains
+                let personalDomains: Set<String> = [
+                    "gmail.com", "yahoo.com", "hotmail.com", "outlook.com",
+                    "icloud.com", "me.com", "live.com", "aol.com", "protonmail.com"
+                ]
+                guard !personalDomains.contains(domain) else { continue }
+
+                var company = companyMap[domain] ?? Company(
+                    domain: domain,
+                    name: Company.displayName(from: domain)
+                )
+                company.attendeeEmails.insert(email)
+                company.meetingCount += 1
+                if let date = company.lastMeetingDate {
+                    if meeting.date > date { company.lastMeetingDate = meeting.date }
+                } else {
+                    company.lastMeetingDate = meeting.date
+                }
+                companyMap[domain] = company
+            }
+        }
+
+        // Count open action items per company
+        for meeting in meetings {
+            for item in meeting.actionItems where !item.isCompleted {
+                if let assignee = item.assignee?.lowercased(),
+                   let domain = assignee.split(separator: "@").last.map(String.init),
+                   companyMap[domain] != nil {
+                    companyMap[domain]?.openActionItems += 1
+                }
+            }
+        }
+
+        return companyMap.values.sorted { $0.meetingCount > $1.meetingCount }
+    }
+
     func prepContext(for attendees: [String], modelContext: ModelContext) -> String {
         let profiles = buildProfiles(modelContext: modelContext)
         var context = ""

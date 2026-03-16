@@ -13,7 +13,8 @@ struct LidIAiOSApp: App {
     init() {
         let schema = Schema([Meeting.self, ActionItem.self, TalkingPoint.self])
         let config = ModelConfiguration(
-            cloudKitDatabase: .none
+            "LidIA",
+            cloudKitDatabase: .automatic
         )
         do {
             modelContainer = try ModelContainer(for: schema, configurations: [config])
@@ -50,6 +51,8 @@ struct LidIAiOSApp: App {
     }
 
     private func startSyncIfNeeded() {
+        // CloudKit handles sync now; only start custom sync polling if explicitly enabled
+        // and the user has configured a custom sync server (fallback mode).
         guard settings.syncEnabled,
               !settings.syncServerURL.isEmpty,
               !settings.syncAuthToken.isEmpty else {
@@ -67,15 +70,19 @@ struct LidIAiOSApp: App {
         let engine = SyncEngine(client: syncClient, modelContainer: modelContainer)
         self.syncEngine = engine
 
+        // Run sync loop entirely on MainActor to avoid dispatch queue assertion failures.
+        // SwiftData's mainContext requires the main dispatch queue.
         Task { @MainActor in
             await syncClient.configure(
                 serverURL: settings.syncServerURL,
                 token: settings.syncAuthToken
             )
-            await syncClient.startPolling(interval: 30) { [weak engine] response in
-                await MainActor.run {
-                    engine?.apply(response)
+            // Manual poll loop instead of callback-based polling
+            while !Task.isCancelled {
+                if let response = await syncClient.sync() {
+                    engine.apply(response)
                 }
+                try? await Task.sleep(for: .seconds(30))
             }
         }
     }

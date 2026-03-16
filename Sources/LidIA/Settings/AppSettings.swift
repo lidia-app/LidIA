@@ -397,6 +397,22 @@ final class AppSettings {
         get { integration.clickUpListID }
         set { integration.clickUpListID = newValue }
     }
+    var autopilotEnabled: Bool {
+        get { integration.autopilotEnabled }
+        set { integration.autopilotEnabled = newValue }
+    }
+    var vaultExportEnabled: Bool {
+        get { integration.vaultExportEnabled }
+        set { integration.vaultExportEnabled = newValue }
+    }
+    var vaultExportPath: String {
+        get { integration.vaultExportPath }
+        set { integration.vaultExportPath = newValue }
+    }
+    var vaultExportIncludeTranscript: Bool {
+        get { integration.vaultExportIncludeTranscript }
+        set { integration.vaultExportIncludeTranscript = newValue }
+    }
 
     // --- Recording ---
     var audioCaptureMode: AudioCaptureMode {
@@ -414,6 +430,10 @@ final class AppSettings {
     var displayName: String {
         get { recording.displayName }
         set { recording.displayName = newValue }
+    }
+    var noiseReductionEnabled: Bool {
+        get { recording.noiseReductionEnabled }
+        set { recording.noiseReductionEnabled = newValue }
     }
 
     // MARK: - Nested Types
@@ -468,6 +488,7 @@ final class AppSettings {
 
     enum STTEngineType: String, CaseIterable, Sendable {
         case parakeet = "Parakeet TDT (Recommended)"
+        case graniteSpeech = "Granite Speech 4.0 (Multilingual)"
         case whisperKit = "WhisperKit"
         case appleSpeech = "Apple Speech"
     }

@@ -75,7 +75,8 @@ final class MeetingPipeline {
             let summary = try await llmClient.summarizeMeeting(
                 transcript: effectiveTranscript(for: meeting, preserveUserEdits: preserveUserEdits),
                 model: model,
-                template: template
+                template: template,
+                attendees: meeting.calendarAttendees
             )
 
             if meeting.title.isEmpty {
@@ -104,6 +105,12 @@ final class MeetingPipeline {
                 )
                 actionItem.sourceQuote = item.sourceQuote
                 meeting.actionItems.append(actionItem)
+            }
+
+            // Step 2b: Process user notes — extract action items and merge insights
+            if !meeting.notes.isEmpty {
+                processingStatus = "Processing notes..."
+                await processNotes(meeting: meeting, model: model)
             }
 
             // Step 3: Detect suggested destinations for action items
@@ -172,4 +179,74 @@ final class MeetingPipeline {
         let edited = meeting.userEditedTranscript?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return edited.isEmpty ? meeting.refinedTranscript : edited
     }
+
+    // MARK: - Notes Processing
+
+    private func processNotes(meeting: Meeting, model: String) async {
+        do {
+            let response = try await llmClient.chat(
+                messages: [
+                    .init(role: "system", content: """
+                        You are analyzing meeting notes written by the user during a meeting. \
+                        Extract any action items, TODOs, follow-ups, or commitments mentioned in the notes. \
+                        Also identify any insights or observations that aren't captured in the meeting summary.
+
+                        Respond with ONLY a JSON object:
+                        {"action_items": [{"title": "...", "assignee": null, "deadline": null}], "insights": ["insight 1"]}
+
+                        Rules:
+                        - Only extract clear action items (not vague observations)
+                        - assignee and deadline can be null if not specified
+                        - insights should be things the user noted that add context beyond the transcript
+                        - Return empty arrays if nothing found
+                        """),
+                    .init(role: "user", content: """
+                        Meeting: \(meeting.title)
+                        Summary (first 500 chars): \(String(meeting.summary.prefix(500)))
+
+                        User's notes:
+                        \(meeting.notes)
+                        """),
+                ],
+                model: model,
+                format: .json
+            )
+
+            let cleaned = response
+                .replacingOccurrences(of: "```json", with: "")
+                .replacingOccurrences(of: "```", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
+            guard let data = cleaned.data(using: .utf8),
+                  let parsed = try? JSONDecoder().decode(NotesExtractionResult.self, from: data) else { return }
+
+            for item in parsed.action_items {
+                let isDuplicate = meeting.actionItems.contains { existing in
+                    existing.title.localizedCaseInsensitiveContains(String(item.title.prefix(20)))
+                }
+                if !isDuplicate {
+                    let actionItem = ActionItem(title: item.title, assignee: item.assignee)
+                    actionItem.sourceQuote = "From notes"
+                    meeting.actionItems.append(actionItem)
+                }
+            }
+
+            if !parsed.insights.isEmpty {
+                let insightsBlock = "\n\n## Notes & Observations\n\n" + parsed.insights.map { "- \($0)" }.joined(separator: "\n")
+                meeting.summary += insightsBlock
+            }
+        } catch {
+            // Non-fatal — notes processing failure shouldn't block the pipeline
+        }
+    }
+}
+
+private struct NotesExtractionResult: Decodable {
+    struct NoteActionItem: Decodable {
+        let title: String
+        let assignee: String?
+        let deadline: String?
+    }
+    let action_items: [NoteActionItem]
+    let insights: [String]
 }

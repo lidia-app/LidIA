@@ -42,5 +42,17 @@ struct RecordingSettingsTab: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+
+        Section("Audio Enhancement") {
+            Toggle("Noise Reduction", isOn: $settings.noiseReductionEnabled)
+            Text("Reduces background noise before transcription using DeepFilterNet. May add processing time.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if settings.noiseReductionEnabled {
+                Label("Available after next dependency update", systemImage: "clock")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
     }
 }

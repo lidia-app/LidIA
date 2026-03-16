@@ -1,0 +1,366 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		31D47B4D18FA2FD3295776BA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5587E45EB7AB050C1C5D6D65 /* Assets.xcassets */; };
+		365C03DA34EF79D8B2A9DBAD /* QuickCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1420C9EDB4EDE98C486262 /* QuickCaptureView.swift */; };
+		90232995CA6A4914D5709CC5 /* LidIAKit in Frameworks */ = {isa = PBXBuildFile; productRef = 60FFE849E83D61951C71B616 /* LidIAKit */; };
+		AB975B439B5F2F2D04ADABD4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE27F5264C51EDEF324D5FB /* ContentView.swift */; };
+		BFA4712AB3509A5B5A5D42B9 /* NextMeetingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81F1997C86BD38B28AE7663 /* NextMeetingView.swift */; };
+		E992284841BE37EA38FB5FED /* ActionItemsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F27174439B0F4EE269FB742C /* ActionItemsView.swift */; };
+		F346C1B77F2F257FE0E46DFB /* LidIAWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A3838922D08283D28C37A3 /* LidIAWatchApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		07A3838922D08283D28C37A3 /* LidIAWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LidIAWatchApp.swift; sourceTree = "<group>"; };
+		5587E45EB7AB050C1C5D6D65 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		946DF138C049FE401884B323 /* LidIAWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LidIAWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3DEC609C5F160752F855854 /* LidIAKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = LidIAKit; path = ../Packages/LidIAKit; sourceTree = SOURCE_ROOT; };
+		EBE27F5264C51EDEF324D5FB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		ED1420C9EDB4EDE98C486262 /* QuickCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCaptureView.swift; sourceTree = "<group>"; };
+		F27174439B0F4EE269FB742C /* ActionItemsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionItemsView.swift; sourceTree = "<group>"; };
+		F81F1997C86BD38B28AE7663 /* NextMeetingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextMeetingView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F1E974F40B08BD63903E2078 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				90232995CA6A4914D5709CC5 /* LidIAKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		214F99B8B7B4A1C9A214B765 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				946DF138C049FE401884B323 /* LidIAWatch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2C4CE10550FD1716D70F39FA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				F27174439B0F4EE269FB742C /* ActionItemsView.swift */,
+				EBE27F5264C51EDEF324D5FB /* ContentView.swift */,
+				07A3838922D08283D28C37A3 /* LidIAWatchApp.swift */,
+				F81F1997C86BD38B28AE7663 /* NextMeetingView.swift */,
+				ED1420C9EDB4EDE98C486262 /* QuickCaptureView.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		8D1411DD945C43BEC14EB5E1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				5587E45EB7AB050C1C5D6D65 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		D31D2C24AEAE997B1CDA417B /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				D3DEC609C5F160752F855854 /* LidIAKit */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		EA2CC3D5269B0CD537E88E89 = {
+			isa = PBXGroup;
+			children = (
+				D31D2C24AEAE997B1CDA417B /* Packages */,
+				8D1411DD945C43BEC14EB5E1 /* Resources */,
+				2C4CE10550FD1716D70F39FA /* Sources */,
+				214F99B8B7B4A1C9A214B765 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA67FF6AFA5168F3C9C2E33A /* LidIAWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 91ABAD441735CB4DB76B3FA4 /* Build configuration list for PBXNativeTarget "LidIAWatch" */;
+			buildPhases = (
+				704A9524E49C70466FC58003 /* Sources */,
+				DD9CC9E48E4FFA4811922E8B /* Resources */,
+				F1E974F40B08BD63903E2078 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LidIAWatch;
+			packageProductDependencies = (
+				60FFE849E83D61951C71B616 /* LidIAKit */,
+			);
+			productName = LidIAWatch;
+			productReference = 946DF138C049FE401884B323 /* LidIAWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CE1BC9FA626A0706216FF507 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					AA67FF6AFA5168F3C9C2E33A = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 56D6E5E8CF0D21C2F7DE02CB /* Build configuration list for PBXProject "LidIAWatch" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EA2CC3D5269B0CD537E88E89;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				84047326023D3E16107B3755 /* XCLocalSwiftPackageReference "../Packages/LidIAKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA67FF6AFA5168F3C9C2E33A /* LidIAWatch */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DD9CC9E48E4FFA4811922E8B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				31D47B4D18FA2FD3295776BA /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		704A9524E49C70466FC58003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E992284841BE37EA38FB5FED /* ActionItemsView.swift in Sources */,
+				AB975B439B5F2F2D04ADABD4 /* ContentView.swift in Sources */,
+				F346C1B77F2F257FE0E46DFB /* LidIAWatchApp.swift in Sources */,
+				BFA4712AB3509A5B5A5D42B9 /* NextMeetingView.swift in Sources */,
+				365C03DA34EF79D8B2A9DBAD /* QuickCaptureView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2193693BDD5F94A7C813D157 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Resources/Info.plist;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.lidia.watch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		741CF59B6EA8B799E3812153 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		A770C77CFED73FBA0DF3F664 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Resources/Info.plist;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.lidia.watch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		CDE2329C0544044088617108 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		56D6E5E8CF0D21C2F7DE02CB /* Build configuration list for PBXProject "LidIAWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				741CF59B6EA8B799E3812153 /* Debug */,
+				CDE2329C0544044088617108 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		91ABAD441735CB4DB76B3FA4 /* Build configuration list for PBXNativeTarget "LidIAWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2193693BDD5F94A7C813D157 /* Debug */,
+				A770C77CFED73FBA0DF3F664 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		84047326023D3E16107B3755 /* XCLocalSwiftPackageReference "../Packages/LidIAKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/LidIAKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		60FFE849E83D61951C71B616 /* LidIAKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LidIAKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = CE1BC9FA626A0706216FF507 /* Project object */;
+}

@@ -19,6 +19,7 @@ struct MenuBarView: View {
     @Environment(GoogleCalendarMonitor.self) private var googleCalendarMonitor
     @Environment(MeetingDetector.self) private var meetingDetector
     @Environment(AppSettings.self) private var settings
+    @Environment(UpdateController.self) private var updateController
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Meeting.date, order: .reverse) private var allMeetings: [Meeting]
 
@@ -59,6 +60,33 @@ struct MenuBarView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
             }
+
+            Divider()
+
+            Button("Check for Updates...") {
+                updateController.checkForUpdates()
+            }
+            .buttonStyle(.plain)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+
+            Button {
+                NSApplication.shared.terminate(nil)
+            } label: {
+                HStack {
+                    Text("Quit LidIA")
+                        .font(.caption)
+                    Spacer()
+                    Text("⌘Q")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
         }
         .frame(width: 320, height: 480)
     }

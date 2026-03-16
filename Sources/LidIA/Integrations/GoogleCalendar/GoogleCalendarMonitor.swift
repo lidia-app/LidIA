@@ -125,11 +125,9 @@ final class GoogleCalendarMonitor {
 
             // Also refresh week events for the Home "Coming up" view
             let calendar = Calendar.current
-            let weekday = calendar.component(.weekday, from: Date())
-            let daysToMonday = (weekday == 1) ? -6 : (2 - weekday)
-            if let monday = calendar.date(byAdding: .day, value: daysToMonday, to: calendar.startOfDay(for: Date())),
-               let fridayEnd = calendar.date(byAdding: .day, value: 5, to: monday) {
-                weekEvents = try await client.listEventsForDateRange(from: monday, to: fridayEnd, maxResults: 50, colorMap: eventColors)
+            let today = calendar.startOfDay(for: Date())
+            if let weekEnd = calendar.date(byAdding: .day, value: 7, to: today) {
+                weekEvents = try await client.listEventsForDateRange(from: Date(), to: weekEnd, maxResults: 50, colorMap: eventColors)
                 Self.logger.info("Refreshed \(self.weekEvents.count) week events")
             }
 

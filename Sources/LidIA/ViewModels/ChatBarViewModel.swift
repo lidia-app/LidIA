@@ -306,7 +306,9 @@ final class ChatBarViewModel {
                 if let ctx = self.backgroundContext {
                     toolResult = VoiceToolExecutor.process(response: rawText, modelContext: ctx)
                 } else {
-                    toolResult = VoiceToolExecutor.Result(spokenResponse: rawText, executedActions: [])
+                    // Strip tool markers even without a context for execution
+                    let cleaned = VoiceToolExecutor.stripToolMarkers(rawText)
+                    toolResult = VoiceToolExecutor.Result(spokenResponse: cleaned, executedActions: [])
                 }
 
                 let finalText = toolResult.spokenResponse
@@ -355,6 +357,25 @@ final class ChatBarViewModel {
 
     func removeAttachment(_ attachment: FileAttachment) {
         pendingAttachments.removeAll { $0.id == attachment.id }
+    }
+
+    // MARK: - Retry
+
+    /// Retry the last assistant response by removing it and re-sending the preceding user message.
+    func retry(messageID: UUID) {
+        guard !isStreaming else { return }
+        // Find the message index
+        guard let idx = messages.firstIndex(where: { $0.id == messageID }),
+              messages[idx].role == .assistant else { return }
+        // Find the preceding user message
+        let userIdx = messages[..<idx].lastIndex(where: { $0.role == .user })
+        guard let uIdx = userIdx else { return }
+        let userText = messages[uIdx].text
+        // Remove the assistant response
+        messages.remove(at: idx)
+        // Re-send
+        inputText = userText
+        send()
     }
 
     // MARK: - Conversation Management

@@ -121,13 +121,24 @@ struct LidIAApp: App {
     @State private var voiceAssistant = VoiceAssistantService()
     @State private var voiceOrbPanel = VoiceOrbPanelController()
     @State private var syncManager = SyncManager()
+    @State private var updateController = UpdateController()
     @State private var backgroundContext: ModelContext?
     private let bannerController = MeetingDetectionBannerController()
     private let joinBannerController = MeetingJoinBannerController()
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema(versionedSchema: AppSchema.self)
-        let config = ModelConfiguration(schema: schema)
+        // Demo mode: use in-memory store so real data is never touched
+        if DemoDataSeeder.isDemoMode {
+            let demoConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            do {
+                return try ModelContainer(for: schema, configurations: [demoConfig])
+            } catch {
+                fatalError("Demo mode ModelContainer failed: \(error)")
+            }
+        }
+        // CloudKit sync: change to .automatic after developer account verification + iCloud container setup
+        let config = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
         do {
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
@@ -167,6 +178,7 @@ struct LidIAApp: App {
                 .environment(proactiveScheduler)
                 .environment(voiceAssistant)
                 .environment(syncManager)
+                .environment(updateController)
                 .environment(\.backgroundContext, backgroundContext)
                 .preferredColorScheme(settings.appearanceMode.colorScheme)
                 .onAppear {
@@ -174,6 +186,17 @@ struct LidIAApp: App {
                         let ctx = ModelContext(sharedModelContainer)
                         ctx.autosaveEnabled = true
                         backgroundContext = ctx
+                    }
+
+                    // Demo mode: seed with realistic dummy data for screenshots
+                    if DemoDataSeeder.isDemoMode {
+                        DemoDataSeeder.seed(context: sharedModelContainer.mainContext)
+                        // Disable live calendar so real events don't show
+                        settings.googleCalendarEnabled = true
+                        settings.calendarEnabled = false
+                        // Inject fake upcoming events
+                        googleCalendarMonitor.isSignedIn = true
+                        googleCalendarMonitor.weekEvents = DemoDataSeeder.fakeUpcomingEvents()
                     }
 
                     AppDelegate.session = session
@@ -188,9 +211,12 @@ struct LidIAApp: App {
                         googleCalendarMonitor: googleCalendarMonitor,
                         meetingDetector: meetingDetector,
                         settings: settings,
-                        modelContainer: sharedModelContainer
+                        modelContainer: sharedModelContainer,
+                        updateController: updateController
                     )
-                    googleCalendarMonitor.configure(settings: settings)
+                    if !DemoDataSeeder.isDemoMode {
+                        googleCalendarMonitor.configure(settings: settings)
+                    }
                     proactiveScheduler.configure(
                         settings: settings,
                         calendarMonitor: googleCalendarMonitor,
@@ -282,8 +308,9 @@ struct LidIAApp: App {
                 .environment(voiceAssistant)
                 .environment(syncManager)
                 .modelContainer(sharedModelContainer)
-                .frame(minWidth: 520, minHeight: 440)
+                .frame(width: 720, height: 580)
         }
+        .windowResizability(.contentSize)
     }
 
     private func handlePendingBanner(_ pending: PendingMeetingBanner?) {

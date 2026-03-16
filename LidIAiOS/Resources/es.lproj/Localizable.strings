@@ -1,0 +1,66 @@
+/* Español — iOS */
+
+/* Pestañas */
+"Home" = "Inicio";
+"Action Items" = "Tareas pendientes";
+"Chat" = "Chat";
+"Settings" = "Configuración";
+
+/* Inicio */
+"Coming Up" = "Próximamente";
+"Recent Meetings" = "Reuniones recientes";
+"No Meetings Yet" = "Aún no hay reuniones";
+"Meetings recorded on your Mac will appear here after sync." = "Las reuniones grabadas en tu Mac aparecerán aquí después de sincronizar.";
+"Untitled Meeting" = "Reunión sin título";
+
+/* Tareas pendientes */
+"No Action Items" = "No hay tareas pendientes";
+"Action items from your meetings will appear here after sync." = "Las tareas de tus reuniones aparecerán aquí después de sincronizar.";
+"Filter action items..." = "Filtrar tareas...";
+"Show Completed" = "Mostrar completadas";
+"New Action Item" = "Nueva tarea";
+"Edit Action Item" = "Editar tarea";
+"Title" = "Título";
+"Details" = "Detalles";
+"Assignee" = "Asignado a";
+"Deadline" = "Fecha límite";
+"Priority" = "Prioridad";
+"Completed" = "Completada";
+"Done" = "Listo";
+"Add" = "Agregar";
+"Cancel" = "Cancelar";
+"Delete" = "Eliminar";
+"Undo" = "Deshacer";
+
+/* Detalle de reunión */
+"Summary" = "Resumen";
+"Actions" = "Acciones";
+"Transcript" = "Transcripción";
+"Notes" = "Notas";
+"No Summary" = "Sin resumen";
+"No Action Items" = "Sin tareas pendientes";
+"No Transcript" = "Sin transcripción";
+"Write your notes..." = "Escribe tus notas...";
+
+/* Chat */
+"Ask about your meetings" = "Pregunta sobre tus reuniones";
+"Ask about meetings..." = "Pregunta sobre reuniones...";
+"Summarize this week" = "Resume esta semana";
+"Open action items" = "Tareas pendientes abiertas";
+"What did I miss?" = "¿Qué me perdí?";
+
+/* Configuración */
+"Profile" = "Perfil";
+"Your Name" = "Tu nombre";
+"LLM Provider" = "Proveedor de LLM";
+"Device Sync" = "Sincronización";
+"Enable Sync" = "Activar sincronización";
+"Server URL" = "URL del servidor";
+"Auth Token" = "Token de autenticación";
+"Soul & Memory" = "Alma y memoria";
+"About" = "Acerca de";
+"Version" = "Versión";
+
+/* Nota de voz */
+"Voice Note" = "Nota de voz";
+"Save" = "Guardar";

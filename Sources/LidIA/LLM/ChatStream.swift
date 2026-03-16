@@ -131,11 +131,9 @@ final class HTTPChatStream: ChatStream {
             - Be concise. 1-3 sentences for simple requests. No filler, no preamble.
             - For action requests (create, complete, edit, delete), confirm briefly and stop. Do NOT elaborate, explain why it's a good idea, or ask follow-up questions unless truly ambiguous.
             - For questions, answer directly. Reference specific meeting titles when possible.
-            - Never use emojis.
+            - Never use emojis. Never output XML tags or JSON tool calls.
             - Base answers only on the provided meeting context.
             - If the context is insufficient, start your response with "Insufficient evidence:".
-
-            \(VoiceToolExecutor.toolPrompt)
             """
         messages.append(LLMChatMessage(role: "system", content: systemPrompt))
 

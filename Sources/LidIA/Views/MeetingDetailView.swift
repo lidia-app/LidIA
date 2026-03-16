@@ -21,17 +21,23 @@ struct MeetingDetailView: View {
     @State private var isResummarizing = false
     @State private var cachedSegments: [TimedSegment] = []
     @State private var cachedHasSpeakerData = false
-    @State private var cachedSpeakerColorMap: [Int: Color] = [:]
+    @State private var cachedHasSpeakerNames = false
+    @State private var headerCollapsed = false
+    @State private var recipeResult = ""
+    @State private var isRunningRecipe = false
+    @State private var showRecipeResult = false
+    @State private var activeRecipeName = ""
 
     var body: some View {
         VStack(spacing: 0) {
-            // Inline header: title + segmented control
-            detailHeader
+            // Collapsible title area
+            titleHeader
 
-            Divider()
-
-            // Tab content fills remaining space
+            // Tab content with glass tab bar as safe area bar
             tabContent
+                .safeAreaBar(edge: .top) {
+                    glassTabBar
+                }
         }
         .toolbar { detailToolbar }
         .onChange(of: meeting.status, initial: true) { _, newStatus in
@@ -83,6 +89,11 @@ struct MeetingDetailView: View {
             .onChange(of: meeting.rawTranscript) {
                 recomputeTranscriptCache()
             }
+            .onChange(of: selectedTab) {
+                withAnimation(.smooth(duration: 0.2)) {
+                    headerCollapsed = false
+                }
+            }
             .sheet(isPresented: $isEditingSummary) {
                 NavigationStack {
                     TextEditor(text: $editableSummary)
@@ -131,6 +142,33 @@ struct MeetingDetailView: View {
                 }
                 .frame(minWidth: 700, minHeight: 420)
             }
+            .sheet(isPresented: $showRecipeResult) {
+                NavigationStack {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(activeRecipeName)
+                                .font(.title2.bold())
+                            MarkdownBlockView(text: recipeResult)
+                                .textSelection(.enabled)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .navigationTitle("Recipe Result")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { showRecipeResult = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Copy") {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(recipeResult, forType: .string)
+                            }
+                        }
+                    }
+                }
+                .frame(minWidth: 560, minHeight: 400)
+            }
     }
 
     private var effectiveSummary: String {
@@ -143,9 +181,9 @@ struct MeetingDetailView: View {
         return edited.isEmpty ? meeting.refinedTranscript : edited
     }
 
-    // MARK: - Detail Header (title + segmented control)
+    // MARK: - Title Header (collapses on scroll)
 
-    private var detailHeader: some View {
+    private var titleHeader: some View {
         VStack(spacing: 12) {
             // Back button
             if let onBack {
@@ -172,20 +210,29 @@ struct MeetingDetailView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
-            // Segmented tab picker — always visible
-            Picker("", selection: $selectedTab) {
-                Text("Summary").tag("summary")
-                Text("Transcript").tag("transcript")
-                Text("Notes").tag("notes")
-                Text("Action Items").tag("actions")
-                Text("Chat").tag("chat")
-            }
-            .pickerStyle(.segmented)
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
-        .padding(.bottom, 12)
+        .padding(.bottom, 8)
+        .opacity(headerCollapsed ? 0 : 1)
+        .frame(maxHeight: headerCollapsed ? 0 : nil)
+        .clipped()
+    }
+
+    // MARK: - Glass Tab Bar (overlaid — content scrolls behind it)
+    // Uses native Picker which adopts Liquid Glass automatically on macOS 26
+
+    private var glassTabBar: some View {
+        Picker("", selection: $selectedTab) {
+            Text("Summary").tag("summary")
+            Text("Transcript").tag("transcript")
+            Text("Notes").tag("notes")
+            Text("Action Items").tag("actions")
+            Text("Chat").tag("chat")
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
     }
 
     private var tabContent: some View {
@@ -212,17 +259,22 @@ struct MeetingDetailView: View {
         if meeting.status == .failed || meeting.status == .complete {
             ToolbarItem(placement: .automatic) {
                 Menu {
-                    Button {
-                        reprocess()
+                    Menu {
+                        Button("Auto (current provider)") { reprocess() }
+                        Button("Auto (overwrite edits)") { reprocess(overwriteUserEdits: true) }
+                        Divider()
+                        if !settings.openaiAPIKey.isEmpty {
+                            Button("OpenAI") { reprocessWith(provider: .openai) }
+                        }
+                        if !settings.anthropicAPIKey.isEmpty {
+                            Button("Anthropic") { reprocessWith(provider: .anthropic) }
+                        }
+                        if settings.llmProvider == .ollama || !settings.ollamaURL.isEmpty {
+                            Button("Ollama") { reprocessWith(provider: .ollama) }
+                        }
+                        Button("Local MLX") { reprocessWith(provider: .mlx) }
                     } label: {
-                        Label("Regenerate (Preserve Edits)", systemImage: "arrow.clockwise")
-                    }
-                    .disabled(isReprocessing)
-
-                    Button {
-                        reprocess(overwriteUserEdits: true)
-                    } label: {
-                        Label("Regenerate (Overwrite Edits)", systemImage: "arrow.trianglehead.clockwise")
+                        Label("Regenerate", systemImage: "arrow.clockwise")
                     }
                     .disabled(isReprocessing)
 
@@ -260,6 +312,30 @@ struct MeetingDetailView: View {
                 }
                 .help("AI-powered actions")
             }
+        }
+        ToolbarItem(placement: .automatic) {
+            Menu {
+                ForEach(Recipe.Category.allCases, id: \.self) { category in
+                    Section(category.rawValue) {
+                        ForEach(Recipe.builtIn.filter { $0.category == category }) { recipe in
+                            Button {
+                                runRecipe(recipe)
+                            } label: {
+                                Text("\(recipe.emoji) \(recipe.name)")
+                            }
+                            .disabled(isRunningRecipe)
+                        }
+                    }
+                }
+            } label: {
+                if isRunningRecipe {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Label("Recipes", systemImage: "book")
+                }
+            }
+            .help("Apply a recipe to analyze this meeting")
         }
         ToolbarItem(placement: .automatic) {
             Menu {
@@ -336,19 +412,7 @@ struct MeetingDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 if meeting.status == .recording {
-                    VStack(spacing: 12) {
-                        Image(systemName: "waveform")
-                            .font(.system(size: 40))
-                            .symbolEffect(.variableColor.iterative, isActive: true)
-                            .foregroundStyle(.red)
-                        Text("Recording in progress...")
-                            .foregroundStyle(.secondary)
-                        Text("\(meeting.rawTranscript.count) words captured")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 40)
+                    RecordingInlineView()
                 } else if meeting.status == .processing {
                     if effectiveSummary.isEmpty {
                         VStack(spacing: 12) {
@@ -512,12 +576,21 @@ struct MeetingDetailView: View {
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
+
+                        // Provider badge — shown via processingStatus from MeetingPipeline
                     }
                 }
             }
             .padding()
             .frame(maxWidth: 900)
             .frame(maxWidth: .infinity)
+        }
+        .onScrollGeometryChange(for: Bool.self) { geo in
+            geo.contentOffset.y > 30
+        } action: { _, scrolledPastThreshold in
+            withAnimation(.smooth(duration: 0.25)) {
+                headerCollapsed = scrolledPastThreshold
+            }
         }
     }
 
@@ -544,6 +617,28 @@ struct MeetingDetailView: View {
                             if cachedHasSpeakerData {
                                 ForEach(Array(cachedSegments.enumerated()), id: \.offset) { index, segment in
                                     speakerBubble(segment: segment, index: index)
+                                }
+                            } else if cachedHasSpeakerNames {
+                                // Speaker names from diarization but no local speaker data —
+                                // show speaker-labeled text without left/right alignment
+                                ForEach(Array(cachedSegments.enumerated()), id: \.offset) { index, segment in
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        if let name = segment.speakerName,
+                                           index == 0 || cachedSegments[index - 1].speakerName != name {
+                                            Text(name)
+                                                .font(.caption)
+                                                .fontWeight(.semibold)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Text(segment.text)
+                                            .font(.body)
+                                            .textSelection(.enabled)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 2)
+                                    .padding(.horizontal, 6)
+                                    .background(highlightBackground(for: segment), in: RoundedRectangle(cornerRadius: 6))
+                                    .id("segment-\(index)")
                                 }
                             } else {
                                 ForEach(Array(cachedSegments.enumerated()), id: \.offset) { index, segment in
@@ -582,6 +677,13 @@ struct MeetingDetailView: View {
                     .padding(.bottom, 80) // Clear space for chat bar overlay
                     .frame(maxWidth: 900)
                     .frame(maxWidth: .infinity)
+                }
+                .onScrollGeometryChange(for: Bool.self) { geo in
+                    geo.contentOffset.y > 30
+                } action: { _, scrolledPastThreshold in
+                    withAnimation(.smooth(duration: 0.25)) {
+                        headerCollapsed = scrolledPastThreshold
+                    }
                 }
             }
         }
@@ -744,8 +846,16 @@ struct MeetingDetailView: View {
         return words.sorted { $0.start < $1.start }
     }
 
+    /// True when at least one word has isLocalSpeaker data, enabling left/right bubble alignment.
+    /// Speaker names alone (from diarization) are NOT enough — without local speaker info,
+    /// all bubbles would appear on the left side.
     private var hasSpeakerData: Bool {
-        normalizedTimingWords.contains { $0.speakerName != nil || $0.isLocalSpeaker != nil }
+        normalizedTimingWords.contains { $0.isLocalSpeaker != nil }
+    }
+
+    /// True when speaker names are available (from diarization) even without local speaker data.
+    private var hasSpeakerNames: Bool {
+        normalizedTimingWords.contains { $0.speakerName != nil }
     }
 
     private var timedSegments: [TimedSegment] {
@@ -812,50 +922,41 @@ struct MeetingDetailView: View {
 
     // MARK: - Speaker Bubble
 
-    private static let speakerColors: [Color] = [
-        .blue, .purple, .orange, .teal, .pink, .green,
-    ]
-
-    private var speakerColorMap: [Int: Color] {
-        var map: [Int: Color] = [:]
-        var colorIndex = 0
-        for word in normalizedTimingWords {
-            if let speaker = word.speaker, map[speaker] == nil {
-                map[speaker] = Self.speakerColors[colorIndex % Self.speakerColors.count]
-                colorIndex += 1
-            }
-        }
-        return map
-    }
-
     private func speakerBubble(segment: TimedSegment, index: Int) -> some View {
-        let color = segment.speaker.flatMap { cachedSpeakerColorMap[$0] } ?? .secondary
         let isLocal = segment.isLocalSpeaker == true
-        let showLabel = index == 0 || cachedSegments[index - 1].speaker != segment.speaker
-            || cachedSegments[index - 1].isLocalSpeaker != segment.isLocalSpeaker
 
-        return VStack(alignment: isLocal ? .trailing : .leading, spacing: 2) {
-            if showLabel {
-                Text(isLocal ? (settings.displayName.isEmpty ? "Me" : settings.displayName) : (segment.speakerName ?? "Others"))
-                    .font(.caption.bold())
-                    .foregroundStyle(isLocal ? Color.blue : color)
-                    .padding(isLocal ? .trailing : .leading, 4)
+        // Show timestamp marker when there's a gap > 30s between segments
+        let showTimestamp = index > 0 && (segment.start - cachedSegments[index - 1].end) > 30
+
+        return VStack(spacing: showTimestamp ? 12 : 4) {
+            if showTimestamp {
+                Text(formatSegmentTime(segment.start))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
 
             Text(segment.text)
                 .font(.body)
                 .textSelection(.enabled)
-                .padding(.vertical, 6)
-                .padding(.horizontal, 10)
-                .frame(maxWidth: .infinity, alignment: isLocal ? .trailing : .leading)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
                 .background(
                     highlightBackground(for: segment) == .clear
-                        ? (isLocal ? Color.blue.opacity(0.08) : color.opacity(0.08))
+                        ? (isLocal ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.08))
                         : highlightBackground(for: segment),
-                    in: RoundedRectangle(cornerRadius: 10)
+                    in: RoundedRectangle(cornerRadius: 16)
                 )
+                .frame(maxWidth: 500, alignment: isLocal ? .trailing : .leading)
+                .frame(maxWidth: .infinity, alignment: isLocal ? .trailing : .leading)
         }
         .id("segment-\(index)")
+    }
+
+    private func formatSegmentTime(_ seconds: TimeInterval) -> String {
+        let mins = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%d:%02d", mins, secs)
     }
 
     private var firstMatchingSegmentIndex: Int? {
@@ -875,7 +976,7 @@ struct MeetingDetailView: View {
     private func recomputeTranscriptCache() {
         cachedSegments = timedSegments
         cachedHasSpeakerData = hasSpeakerData
-        cachedSpeakerColorMap = speakerColorMap
+        cachedHasSpeakerNames = hasSpeakerNames
     }
 
     // MARK: - AI Actions
@@ -983,6 +1084,49 @@ struct MeetingDetailView: View {
         }
     }
 
+    private func runRecipe(_ recipe: Recipe) {
+        guard !isRunningRecipe else { return }
+        isRunningRecipe = true
+        activeRecipeName = "\(recipe.emoji) \(recipe.name)"
+
+        let context = """
+        Meeting: \(meeting.title)
+        Date: \(meeting.date.formatted())
+        Duration: \(Int(meeting.duration / 60)) minutes
+        Attendees: \(meeting.calendarAttendees?.joined(separator: ", ") ?? "Unknown")
+
+        Summary:
+        \(meeting.userEditedSummary ?? meeting.summary)
+
+        Action Items:
+        \(meeting.actionItems.map { "- \($0.title)\($0.assignee.map { " (@\($0))" } ?? "")" }.joined(separator: "\n"))
+
+        Transcript (first 3000 chars):
+        \(String((meeting.userEditedTranscript ?? meeting.refinedTranscript).prefix(3000)))
+        """
+
+        Task {
+            defer { isRunningRecipe = false }
+            let client = makeLLMClient(settings: settings, modelManager: modelManager, taskType: .chat)
+            let model = effectiveModel(for: .query, settings: settings, taskType: .chat)
+            do {
+                let result = try await client.chat(
+                    messages: [
+                        .init(role: "system", content: recipe.prompt),
+                        .init(role: "user", content: context),
+                    ],
+                    model: model,
+                    format: nil
+                )
+                recipeResult = result
+                showRecipeResult = true
+            } catch {
+                recipeResult = "Recipe failed: \(error.localizedDescription)"
+                showRecipeResult = true
+            }
+        }
+    }
+
     private func reprocess(overwriteUserEdits: Bool = false) {
         guard !isReprocessing else { return }
         isReprocessing = true
@@ -1017,6 +1161,40 @@ struct MeetingDetailView: View {
             )
         }
     }
+
+    private func reprocessWith(provider: AppSettings.LLMProvider) {
+        guard !isReprocessing else { return }
+        isReprocessing = true
+
+        // Clear old action items
+        if meeting.status == .complete {
+            for item in meeting.actionItems {
+                modelContext.delete(item)
+            }
+            meeting.actionItems.removeAll()
+            if meeting.userEditedSummary?.isEmpty != false {
+                meeting.summary = ""
+            }
+        }
+
+        guard let client = makeClientForProvider(provider, settings: settings, modelManager: modelManager) else {
+            isReprocessing = false
+            return
+        }
+        let model = defaultModelForProvider(provider, settings: settings)
+        let template = settings.resolveTemplate(for: meeting)
+        let pipeline = MeetingPipeline(llmClient: client, modelContext: modelContext)
+
+        Task {
+            defer { isReprocessing = false }
+            try? await pipeline.process(
+                meeting: meeting,
+                model: model,
+                template: template,
+                preserveUserEdits: true
+            )
+        }
+    }
 }
 
 private struct StructuredSummaryView: View {
@@ -1040,19 +1218,8 @@ private struct StructuredSummaryView: View {
                             Text(bullet.text)
                                 .textSelection(.enabled)
 
-                            if bullet.sourceQuote != nil {
-                                if hoveredBulletID == bullet.id {
-                                    Button {
-                                        selectedBullet = bullet
-                                    } label: {
-                                        Image(systemName: "text.quote")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .transition(.opacity)
-                                }
-                            }
+                            // Source quote popover disabled — transcript matching unreliable
+                            // TODO: re-enable when TranscriptMatcher accuracy improves
                         }
                         .onHover { hovering in
                             withAnimation(.easeInOut(duration: 0.15)) {

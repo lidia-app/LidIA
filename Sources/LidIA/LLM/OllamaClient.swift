@@ -218,9 +218,9 @@ extension LLMClient {
         return refinedParts.joined(separator: "\n\n")
     }
 
-    func summarizeMeeting(transcript: String, model: String, template: MeetingTemplate? = nil) async throws -> MeetingSummaryResponse {
+    func summarizeMeeting(transcript: String, model: String, template: MeetingTemplate? = nil, attendees: [String]? = nil) async throws -> MeetingSummaryResponse {
         let wordCount = transcript.split(separator: " ").count
-        let systemPrompt: String
+        var systemPrompt: String
         if wordCount < 100 {
             // Short transcript — use minimal prompt to prevent hallucination.
             // Structural section requirements cause LLMs to fabricate content
@@ -228,6 +228,31 @@ extension LLMClient {
             systemPrompt = Self.briefTranscriptPrompt
         } else {
             systemPrompt = template?.effectiveSystemPrompt ?? MeetingTemplate.general.systemPrompt
+        }
+
+        // Ground the model against hallucinating speaker attributions
+        if let attendees, !attendees.isEmpty {
+            systemPrompt += """
+
+            ATTENDEES IN THIS MEETING: \(attendees.joined(separator: ", "))
+
+            CRITICAL RULES:
+            - You may ONLY use names from the attendees list above. Never invent or guess names.
+            - When the transcript clearly indicates who is speaking (through context, direct address, or role), attribute to the correct attendee.
+            - When it is genuinely unclear who said something, use "The team discussed" or describe the topic without attributing to a specific person.
+            - Do NOT fabricate statements, events, or details not present in the transcript.
+            - Focus on WHAT was discussed and decided, not just who said what.
+            """
+        } else {
+            systemPrompt += """
+
+            CRITICAL RULES:
+            - No attendee list is available. Do NOT guess or fabricate speaker names.
+            - If the transcript has speaker labels (e.g., **Name:**), use those names only.
+            - Otherwise, use "A participant" or "The team" for attributions.
+            - Do NOT fabricate names, statements, or events not present in the transcript.
+            - Stick strictly to what was actually said in the transcript.
+            """
         }
         var content: String
         do {
@@ -532,7 +557,7 @@ func makeClientForProvider(
     case .deepseek:
         return OpenAIClient(apiKey: settings.deepseekAPIKey, baseURL: URL(string: "https://api.deepseek.com/v1")!)
     case .nvidiaNIM:
-        return OpenAIClient(apiKey: settings.nvidiaAPIKey, baseURL: URL(string: "https://integrate.api.nvidia.com/v1")!)
+        return OpenAIClient(apiKey: settings.nvidiaAPIKey, baseURL: URL(string: "https://integrate.api.nvidia.com/v1")!, timeoutInterval: 180)
     }
 }
 

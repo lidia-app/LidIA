@@ -23,7 +23,7 @@ struct ChatBarView: View {
 
     var body: some View {
         GlassEffectContainer(spacing: 20) {
-            HStack(spacing: 6) {
+            HStack(spacing: 10) {
                 // Toggle popup
                 barPill(icon: isPopupVisible ? "chevron.down" : "chevron.up") {
                     withAnimation(.easeInOut(duration: 0.2)) { onTogglePopup?() }
@@ -84,6 +84,8 @@ struct ChatBarView: View {
 
                 // Close
                 if onClose != nil {
+                    Spacer().frame(width: 4)
+
                     barPill(icon: "xmark") {
                         onClose?()
                     }
@@ -110,8 +112,8 @@ struct ChatBarView: View {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 28, height: 28)
-                .glassEffect(.regular, in: .circle)
+                .frame(width: 26, height: 26)
+                .glassEffect(.regular.interactive(), in: .circle)
         }
         .buttonStyle(.plain)
     }

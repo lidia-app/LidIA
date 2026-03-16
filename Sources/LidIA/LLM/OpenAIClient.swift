@@ -68,27 +68,36 @@ actor OpenAIClient: LLMClient {
     private static let chatModelPrefixes = ["gpt-", "o1", "o3", "o4", "claude"]
 
     func listModels() async throws -> [String] {
-        let url = baseURL.appendingPathComponent("v1/models")
-        var urlRequest = URLRequest(url: url)
-        urlRequest.timeoutInterval = timeoutInterval
-        urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        let request = urlRequest
+        do {
+            let url = baseURL.appendingPathComponent("v1/models")
+            var urlRequest = URLRequest(url: url)
+            urlRequest.timeoutInterval = timeoutInterval
+            urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            let request = urlRequest
 
-        let (data, response) = try await withRetry {
-            try await URLSession.shared.data(for: request)
-        }
-        try validateResponse(response, data: data)
-
-        let modelsResponse = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
-        let models = modelsResponse.data.map(\.id)
-        if skipModelFilter {
-            return models.sorted()
-        }
-        return models
-            .filter { id in
-                Self.chatModelPrefixes.contains { id.hasPrefix($0) }
+            let (data, response) = try await withRetry {
+                try await URLSession.shared.data(for: request)
             }
-            .sorted()
+            try validateResponse(response, data: data)
+
+            let modelsResponse = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
+            let models = modelsResponse.data.map(\.id)
+            if skipModelFilter {
+                return models.sorted()
+            }
+            return models
+                .filter { id in
+                    Self.chatModelPrefixes.contains { id.hasPrefix($0) }
+                }
+                .sorted()
+        } catch {
+            // If custom endpoint doesn't support /v1/models (e.g. NVIDIA NIM),
+            // return empty — the user can type model names manually
+            if baseURL.host != "api.openai.com" {
+                return []
+            }
+            throw error
+        }
     }
 
     func chat(messages: [LLMChatMessage], model: String, format: LLMResponseFormat?) async throws -> String {

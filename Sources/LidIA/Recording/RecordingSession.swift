@@ -26,6 +26,11 @@ final class RecordingSession {
         captureService.elapsedTime
     }
 
+    /// Current audio RMS level for visualization (0.0–1.0 range).
+    var currentRMS: Float {
+        captureService.currentRMS
+    }
+
     /// Minutes past the calendar event's scheduled end time. Nil if no calendar event or not yet past end.
     var calendarOverrunMinutes: Int? {
         guard let endTime = calendarEndTime, isRecording else { return nil }
@@ -376,7 +381,12 @@ final class RecordingSession {
         meeting.duration = captureService.elapsedTime
         meeting.rawTranscript = normalizeWordTimings(transcriptWords, meetingDuration: meeting.duration)
 
-        if meeting.rawTranscript.isEmpty {
+        // Batch engines (Granite Speech) produce no live words during recording.
+        // WhisperKit may also have incomplete output due to task cancellation.
+        // In these cases, post-processing will re-transcribe from the full audio.
+        let isBatchEngine = settings.sttEngine == .graniteSpeech
+        let hasAudioSamples = !drainResult.mic.isEmpty || !drainResult.system.isEmpty
+        if meeting.rawTranscript.isEmpty && !isBatchEngine && !hasAudioSamples {
             meeting.status = .complete
             meeting.summary = "No transcript captured."
             currentMeeting = nil

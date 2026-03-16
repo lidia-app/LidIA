@@ -1,0 +1,515 @@
+/* Español (Latinoamérica) — Traducciones para LidIA */
+
+/* General */
+"LidIA" = "LidIA";
+"Cancel" = "Cancelar";
+"Save" = "Guardar";
+"Delete" = "Eliminar";
+"Close" = "Cerrar";
+"Add" = "Agregar";
+"Done" = "Listo";
+"Failed" = "Falló";
+"Retry" = "Reintentar";
+"Change" = "Cambiar";
+"Duplicate" = "Duplicar";
+"View" = "Ver";
+"Export" = "Exportar";
+"Download" = "Descargar";
+"Downloaded" = "Descargado";
+"Default" = "Predeterminado";
+"None" = "Ninguno";
+"All" = "Todos";
+"Choose..." = "Elegir...";
+"Filter..." = "Filtrar...";
+"Searching..." = "Buscando...";
+"Good" = "Bueno";
+"Hot" = "Caliente";
+"Critical" = "Crítico";
+"Low" = "Bajo";
+"Medium" = "Medio";
+"High" = "Alto";
+"Max" = "Máx";
+"Min" = "Mín";
+"Off" = "Apagado";
+"Now" = "Ahora";
+"Dismiss" = "Descartar";
+"to" = "a";
+"Source" = "Fuente";
+"Timeout" = "Tiempo límite";
+"Emoji" = "Emoji";
+"Hotkey" = "Atajo de teclado";
+"Description" = "Descripción";
+"Deadline" = "Fecha límite";
+"Workspace" = "Espacio de trabajo";
+"Auto" = "Auto";
+"Recommended" = "Recomendado";
+"Built-in" = "Integrado";
+"Live" = "En vivo";
+"Daily" = "Diario";
+"Mondays" = "Lunes";
+
+/* Navegación */
+"Home" = "Inicio";
+"Meetings" = "Reuniones";
+"People" = "Personas";
+"Settings" = "Configuración";
+"Chat" = "Chat";
+"Notes" = "Notas";
+"Summary" = "Resumen";
+"Transcript" = "Transcripción";
+"Action Items" = "Tareas pendientes";
+"Meeting Prep" = "Preparación";
+"Meeting History" = "Historial de reuniones";
+"Favorites" = "Favoritos";
+"Coming up" = "Próximamente";
+"Coming Up" = "Próximamente";
+"Past Meetings" = "Reuniones anteriores";
+"Recent Chats" = "Chats recientes";
+"Referenced Meetings" = "Reuniones referenciadas";
+
+/* Grabación */
+"Record" = "Grabar";
+"Record Meeting" = "Grabar reunión";
+"Start Recording" = "Iniciar grabación";
+"Stop Recording" = "Detener grabación";
+"Stop" = "Detener";
+"Stop Now" = "Detener ahora";
+"Keep Recording" = "Seguir grabando";
+"Start now" = "Iniciar ahora";
+"Recording" = "Grabación";
+"Recording in progress..." = "Grabación en curso...";
+"Start recording this meeting" = "Iniciar grabación de esta reunión";
+"Record a quick note" = "Grabar una nota rápida";
+"Record Prompt (2 min before)" = "Aviso de grabación (2 min antes)";
+"Hide panel (recording continues)" = "Ocultar panel (la grabación continúa)";
+"& start recording" = "e iniciar grabación";
+"start transcription" = "iniciar transcripción";
+
+/* Transcripción */
+"Transcription" = "Transcripción";
+"Full Transcript" = "Transcripción completa";
+"Copy Transcript" = "Copiar transcripción";
+"Copy full transcript to clipboard" = "Copiar transcripción completa al portapapeles";
+"Edit Transcript" = "Editar transcripción";
+"Find in transcript" = "Buscar en transcripción";
+"Jump to first match" = "Ir al primer resultado";
+"Could not locate in transcript" = "No se encontró en la transcripción";
+"Processing transcript..." = "Procesando transcripción...";
+"Finalizing transcript and action items..." = "Finalizando transcripción y tareas pendientes...";
+"Refining transcript..." = "Refinando transcripción...";
+"Speaker Diarization" = "Identificación de hablantes";
+"Identifies different speakers in the transcript after recording stops. Adds a few seconds of processing time." = "Identifica a los diferentes hablantes en la transcripción después de detener la grabación. Agrega unos segundos al tiempo de procesamiento.";
+"Custom Vocabulary" = "Vocabulario personalizado";
+"Add Word" = "Agregar palabra";
+"Heard as" = "Se escucha como";
+"Replace with" = "Reemplazar con";
+"Replace misheard words automatically during transcription." = "Reemplaza automáticamente las palabras mal reconocidas durante la transcripción.";
+"Silence timeout" = "Tiempo de silencio";
+"Auto-stop on silence" = "Detener automáticamente por silencio";
+"Parakeet supports English only. The selected language will be ignored." = "Parakeet solo soporta inglés. El idioma seleccionado será ignorado.";
+"Parakeet TDT ready for transcription" = "Parakeet TDT listo para transcribir";
+
+/* Audio */
+"Only captures your microphone. Other participants won't be transcribed." = "Solo captura tu micrófono. Los demás participantes no serán transcritos.";
+"Captures both your microphone and the other participants' audio from meeting apps. Requires Screen Recording permission." = "Captura tu micrófono y el audio de los demás participantes en apps de reuniones. Requiere permiso de Grabación de Pantalla.";
+"No Input" = "Sin entrada";
+
+/* AI y LLM */
+"AI" = "IA";
+"AI-powered actions" = "Acciones con IA";
+"LLM Provider" = "Proveedor de LLM";
+"Local MLX" = "MLX local";
+"Thinking..." = "Pensando...";
+"Generating summary..." = "Generando resumen...";
+"Generate Notes" = "Generar notas";
+"Generate Preview" = "Generar vista previa";
+"Generate Title" = "Generar título";
+"Edit Summary" = "Editar resumen";
+"Copy Summary as Markdown" = "Copiar resumen como Markdown";
+"Re-summarizing..." = "Resumiendo de nuevo...";
+"Summary processing failed" = "Falló el procesamiento del resumen";
+"No summary yet." = "Aún no hay resumen.";
+"Using your edited summary" = "Usando tu resumen editado";
+"Regenerate (Overwrite Edits)" = "Regenerar (sobreescribir ediciones)";
+"Regenerate (Preserve Edits)" = "Regenerar (conservar ediciones)";
+"Model (blank = auto)" = "Modelo (vacío = auto)";
+"Fallback Model (blank = auto)" = "Modelo de respaldo (vacío = auto)";
+"Fetch Models" = "Obtener modelos";
+"Auto (first available)" = "Auto (primero disponible)";
+"Auto (Recommended)" = "Auto (Recomendado)";
+"Auto mode lets LidIA pick the best model for each task." = "El modo Auto permite que LidIA elija el mejor modelo para cada tarea.";
+"If the primary provider fails, automatically retry with a fallback." = "Si el proveedor principal falla, reintenta automáticamente con uno de respaldo.";
+"No model selected. Open Settings and choose a model, or click Fetch Models." = "No hay modelo seleccionado. Abre Configuración y elige un modelo, o haz clic en Obtener modelos.";
+"No models downloaded yet. Download one below to get started." = "Aún no hay modelos descargados. Descarga uno para comenzar.";
+"Select which local models to download:" = "Selecciona qué modelos locales descargar:";
+"System Prompt" = "Prompt del sistema";
+"Advanced mode (raw prompt)" = "Modo avanzado (prompt directo)";
+"Describe what you want" = "Describe lo que quieres";
+"Detecting action destinations..." = "Detectando destinos de tareas...";
+"Queued for processing" = "En cola de procesamiento";
+"Retry Processing" = "Reintentar procesamiento";
+"The transcript is still saved. You can retry processing or continue in Notes/Chat." = "La transcripción se guardó. Puedes reintentar el procesamiento o continuar en Notas/Chat.";
+
+/* Chat */
+"Ask anything" = "Pregunta lo que sea";
+"Ask anything about your meetings" = "Pregunta lo que sea sobre tus reuniones";
+"Ask anything about your meetings..." = "Pregunta lo que sea sobre tus reuniones...";
+"Ask about meetings, notes, or action items..." = "Pregunta sobre reuniones, notas o tareas pendientes...";
+"Ask about meetings..." = "Pregunta sobre reuniones...";
+"Ask about this meeting..." = "Pregunta sobre esta reunión...";
+"Ask a question about this meeting" = "Haz una pregunta sobre esta reunión";
+"Your first question below." = "Tu primera pregunta abajo.";
+"New Chat" = "Nuevo chat";
+"Quick Chat" = "Chat rápido";
+"Show Quick Chat" = "Mostrar chat rápido";
+"Hide Quick Chat" = "Ocultar chat rápido";
+"Continue this chat..." = "Continuar este chat...";
+"Start a conversation above to create your first thread." = "Inicia una conversación arriba para crear tu primer hilo.";
+"Ask your first question below." = "Haz tu primera pregunta abajo.";
+"Assistant" = "Asistente";
+
+/* Reuniones */
+"Meeting Title" = "Título de la reunión";
+"Meeting detected" = "Reunión detectada";
+"Meeting Processed" = "Reunión procesada";
+"Meeting Soon" = "Reunión próxima";
+"starts in 5 minutes" = "empieza en 5 minutos";
+"Your meeting is starting now" = "Tu reunión está por empezar";
+"Meeting Templates" = "Plantillas de reunión";
+"Template Name" = "Nombre de la plantilla";
+"Add Template" = "Agregar plantilla";
+"Test Template" = "Probar plantilla";
+"Test with Past Meeting..." = "Probar con reunión anterior...";
+"No completed meetings to test with." = "No hay reuniones completadas para probar.";
+"Attendees" = "Asistentes";
+"Attendees:" = "Asistentes:";
+"No prior meetings with these attendees" = "No hay reuniones previas con estos asistentes";
+"Select a meeting or press Shift+Cmd+N for a quick note" = "Selecciona una reunión o presiona Shift+Cmd+N para una nota rápida";
+"Select a meeting..." = "Selecciona una reunión...";
+"No Meeting Selected" = "Ninguna reunión seleccionada";
+"No meetings coming up" = "No hay reuniones próximas";
+"No meetings yet" = "Aún no hay reuniones";
+"Connect a calendar to see upcoming meetings" = "Conecta un calendario para ver las próximas reuniones";
+"Decisions" = "Decisiones";
+"Sections" = "Secciones";
+"Section name" = "Nombre de la sección";
+"Add Section" = "Agregar sección";
+"Bullets" = "Viñetas";
+"Prose" = "Prosa";
+"Table" = "Tabla";
+"Preview Result" = "Vista previa del resultado";
+"Keywords:" = "Palabras clave:";
+"e.g. brainstorm, ideation" = "ej. lluvia de ideas, ideación";
+"e.g. customer calls focusing on pain points and feature requests" = "ej. llamadas con clientes enfocadas en problemas y solicitudes de funciones";
+"Description (shown in picker)" = "Descripción (se muestra en el selector)";
+"Auto-detect meetings" = "Detectar reuniones automáticamente";
+"Auto-Detection Rules" = "Reglas de detección automática";
+"Shows a banner when another app (Zoom, Teams, Chrome, etc.) starts using the microphone." = "Muestra un aviso cuando otra app (Zoom, Teams, Chrome, etc.) empieza a usar el micrófono.";
+"Join" = "Unirse";
+"Join Meeting" = "Unirse a la reunión";
+"Join + Record" = "Unirse + Grabar";
+"Join & Record" = "Unirse y grabar";
+
+/* Tareas pendientes */
+"Action item" = "Tarea pendiente";
+"Action Item Reminders" = "Recordatorios de tareas";
+"Action Item Reminder" = "Recordatorio de tarea";
+"Create Action Item" = "Crear tarea pendiente";
+"Copy Action Items" = "Copiar tareas pendientes";
+"Open Action Items" = "Tareas pendientes abiertas";
+"Add action item..." = "Agregar tarea pendiente...";
+"All items" = "Todas las tareas";
+"My Items" = "Mis tareas";
+"Assigned to me" = "Asignadas a mí";
+"Show completed" = "Mostrar completadas";
+"Overdue Commitments" = "Compromisos vencidos";
+"Pending with attendees" = "Pendientes con asistentes";
+"Follow up..." = "Dar seguimiento...";
+"Type below to add one, or record a meeting to extract them automatically" = "Escribe abajo para agregar una, o graba una reunión para extraerlas automáticamente";
+"Urgent+" = "Urgente+";
+"Completed This Week" = "Completadas esta semana";
+
+/* Notas */
+"New Note" = "Nueva nota";
+"New Note (Shift+Cmd+N)" = "Nueva nota (Shift+Cmd+N)";
+"Quick Note" = "Nota rápida";
+"Write your notes..." = "Escribe tus notas...";
+"Copy Full Export" = "Copiar exportación completa";
+
+/* Personas */
+"People will appear here after meetings with calendar attendees" = "Las personas aparecerán aquí después de reuniones con asistentes del calendario";
+"Talking Points for Next Meeting" = "Temas para la próxima reunión";
+"Add talking point..." = "Agregar tema...";
+"Your name" = "Tu nombre";
+"Your Name" = "Tu nombre";
+"Everyone" = "Todos";
+"Send to" = "Enviar a";
+
+/* Búsqueda */
+"Search meetings & people..." = "Buscar reuniones y personas...";
+
+/* Configuración — General */
+"Appearance" = "Apariencia";
+"System Default" = "Predeterminado del sistema";
+"Notify Before Meetings" = "Notificar antes de reuniones";
+"5 minutes" = "5 minutos";
+"10 minutes" = "10 minutos";
+"15 minutes" = "15 minutos";
+"Press keys…" = "Presiona las teclas…";
+"(Use Default / Auto)" = "(Usar predeterminado / Auto)";
+"Show Calendar in Sidebar" = "Mostrar calendario en la barra lateral";
+"Show in Sidebar" = "Mostrar en la barra lateral";
+
+/* Configuración — API Keys */
+"API Keys" = "API Keys";
+"API keys are stored securely in your macOS Keychain." = "Las API keys se guardan de forma segura en tu Keychain de macOS.";
+"Enter your OpenAI API key in the API Keys section below." = "Ingresa tu API key de OpenAI en la sección de API Keys abajo.";
+"Enter your Anthropic API key in the API Keys section below." = "Ingresa tu API key de Anthropic en la sección de API Keys abajo.";
+"Enter your Cerebras API key in the API Keys section below. Free tier: 1M tokens/day." = "Ingresa tu API key de Cerebras en la sección de API Keys abajo. Nivel gratuito: 1M tokens/día.";
+"Enter your DeepSeek API key in the API Keys section below." = "Ingresa tu API key de DeepSeek en la sección de API Keys abajo.";
+"Enter your NVIDIA API key (starts with nvapi-*) in the API Keys section below. Access Kimi K2.5, Llama, Mistral and more through one key." = "Ingresa tu API key de NVIDIA (empieza con nvapi-*) en la sección de API Keys abajo. Accede a Kimi K2.5, Llama, Mistral y más con una sola clave.";
+"Cerebras offers a free tier (1M tokens/day). DeepSeek and NVIDIA NIM are also supported." = "Cerebras ofrece un nivel gratuito (1M tokens/día). DeepSeek y NVIDIA NIM también son compatibles.";
+"OpenAI Base URL" = "URL base de OpenAI";
+"Ollama URL" = "URL de Ollama";
+"Server URL" = "URL del servidor";
+"Add at least one API key, or use MLX (local, free) as your LLM provider." = "Agrega al menos una API key, o usa MLX (local, gratis) como tu proveedor de LLM.";
+"Skip — I have my own API keys" = "Saltar — ya tengo mis API keys";
+
+/* Configuración — Integraciones */
+"Integrations" = "Integraciones";
+"No integrations configured" = "No hay integraciones configuradas";
+"Enable Calendar" = "Activar calendario";
+"Enable Google Calendar" = "Activar Google Calendar";
+"Sign In with Google" = "Iniciar sesión con Google";
+"Sign Out" = "Cerrar sesión";
+"Connected to Google Calendar" = "Conectado a Google Calendar";
+"Google Calendar not configured. Add Client ID and Secret in Settings." = "Google Calendar no está configurado. Agrega el Client ID y Secret en Configuración.";
+"Sign-in failed" = "Error al iniciar sesión";
+"No authorization code received. You can close this tab." = "No se recibió código de autorización. Puedes cerrar esta pestaña.";
+"Signed in!" = "¡Sesión iniciada!";
+"You can close this tab and return to LidIA." = "Puedes cerrar esta pestaña y volver a LidIA.";
+"Enable Slack Integration" = "Activar integración con Slack";
+"Create a Slack App with chat:write scope. Install to your workspace and paste the Bot User OAuth Token here." = "Crea una Slack App con el permiso chat:write. Instálala en tu workspace y pega el Bot User OAuth Token aquí.";
+"Channel (e.g. #meeting-notes)" = "Canal (ej. #meeting-notes)";
+"Enable n8n Integration" = "Activar integración con n8n";
+"Webhook URL" = "URL del Webhook";
+"n8n Webhook" = "Webhook de n8n";
+"JSON payload is sent to this URL after each meeting is processed. n8n handles downstream orchestration (Slack, ClickUp, email, etc.)." = "Se envía un payload JSON a esta URL después de procesar cada reunión. n8n se encarga de la orquestación (Slack, ClickUp, email, etc.).";
+"What to send" = "Qué enviar";
+"Include full transcript" = "Incluir transcripción completa";
+"Auto-send after meetings" = "Enviar automáticamente después de reuniones";
+"Notion" = "Notion";
+"Fetch Databases" = "Obtener bases de datos";
+"Meeting pages use the meeting database. Action item export buttons use the task tracker database." = "Las páginas de reuniones usan la base de datos de reuniones. Los botones de exportación de tareas usan la base de datos del rastreador de tareas.";
+"Add your Notion API key in Settings before exporting action items." = "Agrega tu API key de Notion en Configuración antes de exportar tareas pendientes.";
+"Choose a Notion task tracker database in Settings before exporting action items." = "Elige una base de datos de Notion para tareas en Configuración antes de exportar.";
+"There are no action items to export." = "No hay tareas pendientes para exportar.";
+"Apple Reminders" = "Recordatorios de Apple";
+"Sync Action Items to Reminders" = "Sincronizar tareas con Recordatorios";
+"Auto-create after meetings" = "Crear automáticamente después de reuniones";
+"Enable Sync" = "Activar sincronización";
+"Syncs meetings, action items, and files between your devices over your private network." = "Sincroniza reuniones, tareas y archivos entre tus dispositivos a través de tu red privada.";
+
+/* Configuración — Voz */
+"Voice Assistant" = "Asistente de voz";
+"Enable Voice Assistant" = "Activar asistente de voz";
+"End voice mode" = "Terminar modo de voz";
+"Read responses aloud" = "Leer respuestas en voz alta";
+"Applies to both voice assistant and chat." = "Aplica tanto al asistente de voz como al chat.";
+"System Voice (free, built-in)" = "Voz del sistema (gratis, integrada)";
+"OpenAI (requires API key)" = "OpenAI (requiere API key)";
+"OpenAI API key required for cloud TTS" = "Se requiere API key de OpenAI para TTS en la nube";
+
+/* Configuración — Exportación */
+"Export path" = "Ruta de exportación";
+"Confirm destination" = "Confirmar destino";
+"Auto-export meetings as Markdown" = "Exportar reuniones como Markdown automáticamente";
+"Meetings are saved as `.md` files with YAML frontmatter. Compatible with Obsidian, iA Writer, etc." = "Las reuniones se guardan como archivos `.md` con YAML frontmatter. Compatible con Obsidian, iA Writer, etc.";
+
+/* Configuración — MCP / Claude */
+"Connect LidIA to Claude Desktop so Claude can access your meeting data." = "Conecta LidIA con Claude Desktop para que Claude pueda acceder a tus datos de reuniones.";
+"Copy MCP Config" = "Copiar configuración MCP";
+"~/Library/Application Support/Claude/claude_desktop_config.json" = "~/Library/Application Support/Claude/claude_desktop_config.json";
+
+/* Configuración — Soul y Memoria */
+"Soul & Memory" = "Alma y memoria";
+"Edit SOUL.md" = "Editar SOUL.md";
+"View MEMORY.md" = "Ver MEMORY.md";
+
+/* Importación */
+"Import Notes" = "Importar notas";
+"Import Files..." = "Importar archivos...";
+"Import .md, .mdx, or .txt files as past meetings. Files with YAML frontmatter will have their title and date extracted automatically." = "Importa archivos .md, .mdx o .txt como reuniones anteriores. Los archivos con YAML frontmatter tendrán su título y fecha extraídos automáticamente.";
+
+/* Actualizaciones */
+"Check for Updates..." = "Buscar actualizaciones...";
+"Quit LidIA" = "Salir de LidIA";
+
+/* Asistente de configuración */
+"Welcome to LidIA" = "Bienvenido a LidIA";
+"All Set!" = "¡Todo listo!";
+"Start Using LidIA" = "Empezar a usar LidIA";
+"Everything runs locally on your Mac. No data leaves your device." = "Todo se ejecuta localmente en tu Mac. Ningún dato sale de tu dispositivo.";
+"LidIA can run entirely on your Mac — your audio and meetings never leave your device." = "LidIA puede funcionar completamente en tu Mac — tu audio y reuniones nunca salen de tu dispositivo.";
+"Automatic (best available)" = "Automático (mejor disponible)";
+"Leave blank to auto-select the best model for your Mac. Examples: large-v3, base, small. Model is downloaded automatically on first use." = "Deja vacío para seleccionar automáticamente el mejor modelo para tu Mac. Ejemplos: large-v3, base, small. El modelo se descarga automáticamente en el primer uso.";
+"Uses Apple's built-in speech recognition. Works for short recordings but degrades on sessions longer than ~1 minute." = "Usa el reconocimiento de voz integrado de Apple. Funciona para grabaciones cortas pero se degrada en sesiones de más de ~1 minuto.";
+"This may take a minute..." = "Esto puede tardar un momento...";
+
+/* Proactivo / Notificaciones */
+"Morning Digest" = "Resumen matutino";
+"Pre-Meeting Prep" = "Preparación previa";
+"Post-Meeting Nudge" = "Recordatorio post-reunión";
+"Prep Notification (5 min before)" = "Notificación de preparación (5 min antes)";
+"Quiet hours" = "Horas de silencio";
+"Morning digests, prep nudges, and action item reminders are suppressed during quiet hours." = "Los resúmenes matutinos, avisos de preparación y recordatorios de tareas se suspenden durante las horas de silencio.";
+"Weekly Digest" = "Resumen semanal";
+"Weekly Meeting Digest" = "Resumen semanal de reuniones";
+"View in LidIA" = "Ver en LidIA";
+"Meeting Follow-Up" = "Seguimiento de reunión";
+"Add quick notes or retry processing in LidIA." = "Agrega notas rápidas o reintenta el procesamiento en LidIA.";
+"Open LidIA for details." = "Abre LidIA para ver los detalles.";
+"Open LidIA for the latest notes and context." = "Abre LidIA para ver las últimas notas y contexto.";
+"Open Settings" = "Abrir configuración";
+"Open Settings..." = "Abrir configuración...";
+
+/* Estados del asistente de voz */
+"Unmute" = "Activar micrófono";
+"Mute" = "Silenciar";
+"Muted" = "Silenciado";
+"Tap to start" = "Toca para iniciar";
+"Listening — tap to send" = "Escuchando — toca para enviar";
+"Speaking..." = "Hablando...";
+"Sorry, I had trouble with that." = "Lo siento, tuve un problema con eso.";
+
+/* Idiomas */
+"Arabic" = "Árabe";
+"Chinese (Simplified)" = "Chino (simplificado)";
+"Chinese (Traditional)" = "Chino (tradicional)";
+"Dutch" = "Neerlandés";
+"English (UK)" = "Inglés (Reino Unido)";
+"English (US)" = "Inglés (EE. UU.)";
+"French" = "Francés";
+"German" = "Alemán";
+"Hindi" = "Hindi";
+"Italian" = "Italiano";
+"Japanese" = "Japonés";
+"Korean" = "Coreano";
+"Polish" = "Polaco";
+"Portuguese (Brazil)" = "Portugués (Brasil)";
+"Portuguese (Portugal)" = "Portugués (Portugal)";
+"Russian" = "Ruso";
+"Spanish" = "Español";
+"Spanish (Latin America)" = "Español (Latinoamérica)";
+"Swedish" = "Sueco";
+"Turkish" = "Turco";
+
+/* Vistas — Adicional */
+"All People" = "Todas las personas";
+"Close chat" = "Cerrar chat";
+"Open chat" = "Abrir chat";
+"Stop dictation" = "Detener dictado";
+"Voice input" = "Entrada de voz";
+"Full screen" = "Pantalla completa";
+"Close (Esc)" = "Cerrar (Esc)";
+"Hide Advanced Models" = "Ocultar modelos avanzados";
+"Meeting" = "Reunión";
+"You" = "Tú";
+"Untitled Meeting" = "Reunión sin título";
+"Others" = "Otros";
+"No People Yet" = "Aún no hay personas";
+"Remove from favorites" = "Quitar de favoritos";
+"Add to favorites" = "Agregar a favoritos";
+"Met today" = "Reunión hoy";
+"Last met yesterday" = "Última reunión ayer";
+"All on track" = "Todo al día";
+"Today" = "Hoy";
+"Tomorrow" = "Mañana";
+"Delete Meeting" = "Eliminar reunión";
+"Delete Meeting?" = "¿Eliminar reunión?";
+"No chats yet" = "Aún no hay chats";
+"Delete Chat" = "Eliminar chat";
+"No messages yet" = "Aún no hay mensajes";
+"Stopping" = "Deteniendo";
+
+/* Configuración — Adicional */
+"Theme" = "Tema";
+"Personality" = "Personalidad";
+"Import Preview" = "Vista previa de importación";
+"Engine" = "Motor";
+"Language" = "Idioma";
+"Provider" = "Proveedor";
+"Active Model" = "Modelo activo";
+"Default Model" = "Modelo predeterminado";
+"Query Model" = "Modelo de consulta";
+"Summary Model" = "Modelo de resumen";
+"Model Routing (Advanced)" = "Enrutamiento de modelos (Avanzado)";
+"Fallback Provider" = "Proveedor de respaldo";
+"OpenAI API Key" = "API Key de OpenAI";
+"Anthropic API Key" = "API Key de Anthropic";
+"Cerebras API Key" = "API Key de Cerebras";
+"DeepSeek API Key" = "API Key de DeepSeek";
+"NVIDIA API Key" = "API Key de NVIDIA";
+"Audio Capture" = "Captura de audio";
+"Text-to-Speech" = "Texto a voz";
+"TTS Model" = "Modelo TTS";
+"Voice" = "Voz";
+"Google Calendar" = "Google Calendar";
+"Apple Calendar & Reminders" = "Calendario y Recordatorios de Apple";
+"Minutes Before" = "Minutos antes";
+"Proactive Assistant" = "Asistente proactivo";
+"Digest Time" = "Hora del resumen";
+"Frequency" = "Frecuencia";
+"Quiet Hours Start" = "Inicio de horas de silencio";
+"Quiet Hours End" = "Fin de horas de silencio";
+"Meeting Detection" = "Detección de reuniones";
+"Device Sync" = "Sincronización de dispositivos";
+"Auth Token" = "Token de autenticación";
+"Meeting Database" = "Base de datos de reuniones";
+"Task Tracker Database" = "Base de datos de tareas";
+"API Key" = "API Key";
+"Claude MCP" = "Claude MCP";
+"Binary Path" = "Ruta del binario";
+"Config Path" = "Ruta de configuración";
+"Slack" = "Slack";
+"Bot Token" = "Token del bot";
+"Markdown Vault" = "Bóveda Markdown";
+"Auth Header (optional)" = "Header de autenticación (opcional)";
+
+/* Tareas pendientes — Adicional */
+"No Action Items" = "No hay tareas pendientes";
+"Scope" = "Alcance";
+"Priority" = "Prioridad";
+"Sending..." = "Enviando...";
+"Send Visible to Notion" = "Enviar visibles a Notion";
+"Send All Confirmed" = "Enviar todas las confirmadas";
+"OK" = "OK";
+"Dispatch" = "Despachar";
+"Notion Export" = "Exportar a Notion";
+"Source Data" = "Datos de origen";
+"Mark incomplete" = "Marcar como pendiente";
+"Mark complete" = "Marcar como completada";
+"Clear deadline" = "Quitar fecha límite";
+"Clear" = "Limpiar";
+"Action Item" = "Tarea pendiente";
+"ClickUp" = "ClickUp";
+"Reminder" = "Recordatorio";
+"n8n" = "n8n";
+"Confirm destination" = "Confirmar destino";
+
+/* Plantillas — Adicional */
+"Generating preview..." = "Generando vista previa...";
+"No transcript available for this meeting." = "No hay transcripción disponible para esta reunión.";
+"Preview prompt" = "Vista previa del prompt";
+"Delete Template" = "Eliminar plantilla";
+
+/* Configuración inicial — Adicional */
+"Download Selected Models" = "Descargar modelos seleccionados";
+"Continue Without Local Models" = "Continuar sin modelos locales";
+"Parakeet TDT 0.6B" = "Parakeet TDT 0.6B";
+
+/* Calendario — Adicional */
+"Starting now" = "Comenzando ahora";
+"Client ID" = "Client ID";
+"Client Secret" = "Client Secret";
+"Items to create" = "Elementos a crear";
