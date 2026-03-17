@@ -44,7 +44,7 @@ enum ModelMenuCatalog {
         case .mlx:
             return Array(cleaned)
 
-        case .cerebras, .deepseek, .nvidiaNIM:
+        case .cerebras, .deepseek, .nvidiaNIM, .openRouter:
             return cleaned.prefix(6).map { $0 }
         }
     }
@@ -79,6 +79,8 @@ enum ModelMenuCatalog {
             return ["deepseek-chat", "deepseek-reasoner"]
         case .nvidiaNIM:
             return ["nvidia/llama-3.3-70b-instruct", "kimi-k2.5", "mistralai/mistral-large-latest"]
+        case .openRouter:
+            return ["google/gemini-2.5-flash", "google/gemini-2.5-pro", "anthropic/claude-sonnet-4", "openai/gpt-4o-mini", "meta-llama/llama-4-maverick"]
         }
     }
 

@@ -58,7 +58,7 @@ actor OpenAIClient: LLMClient {
     let timeoutInterval: TimeInterval
     let skipModelFilter: Bool
 
-    init(apiKey: String, baseURL: URL = URL(string: "https://api.openai.com")!, timeoutInterval: TimeInterval = 120, skipModelFilter: Bool = false) {
+    init(apiKey: String, baseURL: URL = URL(string: "https://api.openai.com/v1")!, timeoutInterval: TimeInterval = 120, skipModelFilter: Bool = false) {
         self.apiKey = apiKey
         self.baseURL = baseURL
         self.timeoutInterval = timeoutInterval
@@ -69,7 +69,7 @@ actor OpenAIClient: LLMClient {
 
     func listModels() async throws -> [String] {
         do {
-            let url = baseURL.appendingPathComponent("v1/models")
+            let url = baseURL.appendingPathComponent("models")
             var urlRequest = URLRequest(url: url)
             urlRequest.timeoutInterval = timeoutInterval
             urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -105,7 +105,7 @@ actor OpenAIClient: LLMClient {
             throw LLMError.authenticationError("API key not configured. Open Settings and enter your API key.")
         }
 
-        let url = baseURL.appendingPathComponent("v1/chat/completions")
+        let url = baseURL.appendingPathComponent("chat/completions")
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.timeoutInterval = timeoutInterval
@@ -137,7 +137,7 @@ actor OpenAIClient: LLMClient {
     }
 
     func chatStream(messages: [LLMChatMessage], model: String) async -> AsyncThrowingStream<String, Error> {
-        let url = baseURL.appendingPathComponent("v1/chat/completions")
+        let url = baseURL.appendingPathComponent("chat/completions")
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.timeoutInterval = timeoutInterval

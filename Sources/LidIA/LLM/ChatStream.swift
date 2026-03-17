@@ -36,6 +36,7 @@ struct ChatBarMessage: Identifiable, Codable, Sendable, Equatable {
     let attachments: [FileAttachment]
     let sourceMeetings: [String]
     let groundingConfidence: GroundingConfidence?
+    let modelLabel: String?
 
     enum Role: String, Codable, Sendable {
         case user
@@ -48,23 +49,20 @@ struct ChatBarMessage: Identifiable, Codable, Sendable, Equatable {
         text: String,
         attachments: [FileAttachment] = [],
         sourceMeetings: [String] = [],
-        groundingConfidence: GroundingConfidence? = nil
+        groundingConfidence: GroundingConfidence? = nil,
+        modelLabel: String? = nil
     ) {
         self.id = id
         self.role = role
         self.text = text
         self.attachments = attachments
         self.sourceMeetings = sourceMeetings
+        self.modelLabel = modelLabel
         self.groundingConfidence = groundingConfidence
     }
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case role
-        case text
-        case attachments
-        case sourceMeetings
-        case groundingConfidence
+        case id, role, text, attachments, sourceMeetings, groundingConfidence, modelLabel
     }
 
     init(from decoder: Decoder) throws {
@@ -75,6 +73,7 @@ struct ChatBarMessage: Identifiable, Codable, Sendable, Equatable {
         attachments = try container.decodeIfPresent([FileAttachment].self, forKey: .attachments) ?? []
         sourceMeetings = try container.decodeIfPresent([String].self, forKey: .sourceMeetings) ?? []
         groundingConfidence = try container.decodeIfPresent(GroundingConfidence.self, forKey: .groundingConfidence)
+        modelLabel = try container.decodeIfPresent(String.self, forKey: .modelLabel)
     }
 }
 

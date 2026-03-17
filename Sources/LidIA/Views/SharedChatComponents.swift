@@ -134,6 +134,7 @@ struct ModelMenuView: View {
 struct MessageBubbleView: View {
     let message: ChatBarMessage
     var onRetry: (() -> Void)?
+    var onRetryWith: ((AppSettings.LLMProvider) -> Void)?
 
     var body: some View {
         if message.role == .user {
@@ -151,19 +152,34 @@ struct MessageBubbleView: View {
                     .textSelection(.enabled)
 
                 HStack(spacing: 8) {
+                    if let model = message.modelLabel, !model.isEmpty {
+                        Text(model)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+
                     if let confidence = message.groundingConfidence {
                         ConfidenceBadgeView(confidence: confidence)
                     }
 
                     if let onRetry {
-                        Button {
-                            onRetry()
+                        Menu {
+                            Button("Retry") { onRetry() }
+                            if onRetryWith != nil {
+                                Divider()
+                                ForEach(AppSettings.LLMProvider.allCases, id: \.self) { provider in
+                                    Button("Retry with \(provider.rawValue)") {
+                                        onRetryWith?(provider)
+                                    }
+                                }
+                            }
                         } label: {
                             Image(systemName: "arrow.clockwise")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
                         .help("Retry this response")
                     }
                 }

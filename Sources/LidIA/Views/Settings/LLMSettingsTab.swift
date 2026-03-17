@@ -12,6 +12,7 @@ struct LLMSettingsTab: View {
     @State private var cerebrasKeyStatus: APIKeyStatus = .untested
     @State private var deepseekKeyStatus: APIKeyStatus = .untested
     @State private var nvidiaKeyStatus: APIKeyStatus = .untested
+    @State private var openRouterKeyStatus: APIKeyStatus = .untested
 
     private enum APIKeyStatus: Equatable {
         case untested
@@ -222,6 +223,12 @@ struct LLMSettingsTab: View {
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
+            case .openRouter:
+                if settings.openRouterAPIKey.isEmpty {
+                    Text("Enter your OpenRouter API key in the API Keys section below. OpenRouter provides access to hundreds of models through a single API key. Free tier available.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             }
 
             if settings.llmProvider != .mlx {
@@ -328,7 +335,11 @@ struct LLMSettingsTab: View {
                 await testNVIDIAKey()
             }
 
-            if settings.openaiAPIKey.isEmpty && settings.anthropicAPIKey.isEmpty && settings.cerebrasAPIKey.isEmpty && settings.deepseekAPIKey.isEmpty && settings.nvidiaAPIKey.isEmpty && settings.llmProvider != .mlx && settings.llmProvider != .ollama {
+            apiKeyRow(label: "OpenRouter API Key", key: $settings.openRouterAPIKey, status: $openRouterKeyStatus) {
+                await testOpenRouterKey()
+            }
+
+            if settings.openaiAPIKey.isEmpty && settings.anthropicAPIKey.isEmpty && settings.cerebrasAPIKey.isEmpty && settings.deepseekAPIKey.isEmpty && settings.nvidiaAPIKey.isEmpty && settings.openRouterAPIKey.isEmpty && settings.llmProvider != .mlx && settings.llmProvider != .ollama {
                 Text("Add at least one API key, or use MLX (local, free) as your LLM provider.")
                     .font(.caption)
                     .foregroundStyle(.orange)
@@ -354,6 +365,8 @@ struct LLMSettingsTab: View {
             return $settings.deepseekModel
         case .nvidiaNIM:
             return $settings.nvidiaModel
+        case .openRouter:
+            return $settings.openRouterModel
         }
     }
 
@@ -532,6 +545,18 @@ struct LLMSettingsTab: View {
             deepseekKeyStatus = .valid
         } catch {
             deepseekKeyStatus = .invalid(error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private func testOpenRouterKey() async {
+        openRouterKeyStatus = .testing
+        do {
+            let client = OpenAIClient(apiKey: settings.openRouterAPIKey, baseURL: URL(string: "https://openrouter.ai/api/v1")!)
+            _ = try await client.listModels()
+            openRouterKeyStatus = .valid
+        } catch {
+            openRouterKeyStatus = .invalid(error.localizedDescription)
         }
     }
 

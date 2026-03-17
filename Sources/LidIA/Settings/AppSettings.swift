@@ -127,6 +127,14 @@ final class AppSettings {
         get { llm.nvidiaModel }
         set { llm.nvidiaModel = newValue }
     }
+    var openRouterAPIKey: String {
+        get { llm.openRouterAPIKey }
+        set { llm.openRouterAPIKey = newValue }
+    }
+    var openRouterModel: String {
+        get { llm.openRouterModel }
+        set { llm.openRouterModel = newValue }
+    }
     var fallbackProvider: String {
         get { llm.fallbackProvider }
         set { llm.fallbackProvider = newValue }
@@ -460,6 +468,7 @@ final class AppSettings {
         case cerebras = "Cerebras (Free)"
         case deepseek = "DeepSeek"
         case nvidiaNIM = "NVIDIA NIM"
+        case openRouter = "OpenRouter"
     }
 
     enum TTSProvider: String, CaseIterable, Sendable {

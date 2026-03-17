@@ -548,7 +548,7 @@ func makeClientForProvider(
     case .openai:
         return OpenAIClient(
             apiKey: settings.openaiAPIKey,
-            baseURL: URL(string: settings.openaiBaseURL) ?? URL(string: "https://api.openai.com")!
+            baseURL: URL(string: settings.openaiBaseURL) ?? URL(string: "https://api.openai.com/v1")!
         )
     case .anthropic:
         return AnthropicClient(apiKey: settings.anthropicAPIKey)
@@ -558,6 +558,8 @@ func makeClientForProvider(
         return OpenAIClient(apiKey: settings.deepseekAPIKey, baseURL: URL(string: "https://api.deepseek.com/v1")!)
     case .nvidiaNIM:
         return OpenAIClient(apiKey: settings.nvidiaAPIKey, baseURL: URL(string: "https://integrate.api.nvidia.com/v1")!, timeoutInterval: 180)
+    case .openRouter:
+        return OpenAIClient(apiKey: settings.openRouterAPIKey, baseURL: URL(string: "https://openrouter.ai/api/v1")!)
     }
 }
 
@@ -643,13 +645,14 @@ func effectiveModel(for purpose: ModelPurpose, settings: AppSettings, taskType: 
 @MainActor
 func defaultModelForProvider(_ provider: AppSettings.LLMProvider, settings: AppSettings) -> String {
     switch provider {
-    case .ollama: return settings.ollamaModel.isEmpty ? "llama3.2" : settings.ollamaModel
+    case .ollama: return settings.ollamaModel.isEmpty ? "qwen3:4b" : settings.ollamaModel
     case .mlx: return settings.selectedMLXModelID
     case .openai: return settings.openaiModel.isEmpty ? "gpt-4o" : settings.openaiModel
-    case .anthropic: return settings.anthropicModel
+    case .anthropic: return settings.anthropicModel.isEmpty ? "claude-sonnet-4-5-20250514" : settings.anthropicModel
     case .cerebras: return settings.cerebrasModel.isEmpty ? "llama-3.3-70b" : settings.cerebrasModel
     case .deepseek: return settings.deepseekModel.isEmpty ? "deepseek-chat" : settings.deepseekModel
-    case .nvidiaNIM: return settings.nvidiaModel.isEmpty ? "nvidia/llama-3.3-70b-instruct" : settings.nvidiaModel
+    case .nvidiaNIM: return settings.nvidiaModel.isEmpty ? "moonshotai/kimi-k2.5" : settings.nvidiaModel
+    case .openRouter: return settings.openRouterModel.isEmpty ? "google/gemini-2.0-flash-001" : settings.openRouterModel
     }
 }
 
@@ -671,6 +674,8 @@ private func effectiveDefaultModel(settings: AppSettings) -> String {
         selectedModel = settings.deepseekModel
     case .nvidiaNIM:
         selectedModel = settings.nvidiaModel
+    case .openRouter:
+        selectedModel = settings.openRouterModel
     }
 
     if !selectedModel.isEmpty {

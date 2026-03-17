@@ -17,7 +17,7 @@ final class LLMSettings {
     var ollamaModel: String = "" {
         didSet { saveDefault(ollamaModel, forKey: "ollamaModel") }
     }
-    var openaiBaseURL: String = "https://api.openai.com" {
+    var openaiBaseURL: String = "https://api.openai.com/v1" {
         didSet { saveDefault(openaiBaseURL, forKey: "openaiBaseURL") }
     }
     var openaiAPIKey: String = "" {
@@ -64,6 +64,14 @@ final class LLMSettings {
         didSet { saveDefault(nvidiaModel, forKey: "nvidiaModel") }
     }
 
+    // OpenRouter
+    var openRouterAPIKey: String = "" {
+        didSet { SettingsKeychain.save(key: "lidia.openrouter.apiKey", value: openRouterAPIKey) }
+    }
+    var openRouterModel: String = "google/gemini-2.5-flash" {
+        didSet { saveDefault(openRouterModel, forKey: "openRouterModel") }
+    }
+
     var queryModel: String = "" {
         didSet { saveDefault(queryModel, forKey: "queryModel") }
     }
@@ -96,7 +104,12 @@ final class LLMSettings {
         llmProvider = AppSettings.LLMProvider(rawValue: defaults.string(forKey: "llmProvider") ?? "") ?? .ollama
         ollamaURL = defaults.string(forKey: "ollamaURL") ?? "http://localhost:11434"
         ollamaModel = defaults.string(forKey: "ollamaModel") ?? ""
-        openaiBaseURL = defaults.string(forKey: "openaiBaseURL") ?? "https://api.openai.com"
+        var loadedURL = defaults.string(forKey: "openaiBaseURL") ?? "https://api.openai.com/v1"
+        // Migrate old URLs that don't include /v1
+        if loadedURL == "https://api.openai.com" {
+            loadedURL = "https://api.openai.com/v1"
+        }
+        openaiBaseURL = loadedURL
         openaiModel = defaults.string(forKey: "openaiModel") ?? ""
         openaiAPIKey = SettingsKeychain.load(key: "lidia.openai.apiKey") ?? ""
         selectedMLXModelID = defaults.string(forKey: "selectedMLXModelID") ?? ""
@@ -108,6 +121,8 @@ final class LLMSettings {
         deepseekModel = defaults.string(forKey: "deepseekModel") ?? "deepseek-chat"
         nvidiaAPIKey = SettingsKeychain.load(key: "lidia.nvidia.apiKey") ?? ""
         nvidiaModel = defaults.string(forKey: "nvidiaModel") ?? "nvidia/llama-3.3-70b-instruct"
+        openRouterAPIKey = SettingsKeychain.load(key: "lidia.openrouter.apiKey") ?? ""
+        openRouterModel = defaults.string(forKey: "openRouterModel") ?? "google/gemini-2.5-flash"
         queryModel = defaults.string(forKey: "queryModel") ?? ""
         summaryModel = defaults.string(forKey: "summaryModel") ?? ""
         fallbackProvider = defaults.string(forKey: "fallbackProvider") ?? ""

@@ -256,7 +256,7 @@ struct MeetingDetailView: View {
 
     @ToolbarContentBuilder
     private var detailToolbar: some ToolbarContent {
-        if meeting.status == .failed || meeting.status == .complete {
+        if meeting.status == .failed || meeting.status == .complete || meeting.status == .processing || meeting.status == .queued {
             ToolbarItem(placement: .automatic) {
                 Menu {
                     Menu {
@@ -273,6 +273,15 @@ struct MeetingDetailView: View {
                             Button("Ollama") { reprocessWith(provider: .ollama) }
                         }
                         Button("Local MLX") { reprocessWith(provider: .mlx) }
+                        if !settings.nvidiaAPIKey.isEmpty {
+                            Button("NVIDIA NIM") { reprocessWith(provider: .nvidiaNIM) }
+                        }
+                        if !settings.deepseekAPIKey.isEmpty {
+                            Button("DeepSeek") { reprocessWith(provider: .deepseek) }
+                        }
+                        if !settings.openRouterAPIKey.isEmpty {
+                            Button("OpenRouter") { reprocessWith(provider: .openRouter) }
+                        }
                     } label: {
                         Label("Regenerate", systemImage: "arrow.clockwise")
                     }

@@ -39,6 +39,8 @@ enum ModelRouter {
             return "deepseek-reasoner"
         case .nvidiaNIM:
             return settings.nvidiaModel
+        case .openRouter:
+            return settings.openRouterModel
         }
     }
 

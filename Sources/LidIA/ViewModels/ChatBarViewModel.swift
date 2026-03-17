@@ -325,7 +325,8 @@ final class ChatBarViewModel {
                         role: .assistant,
                         text: finalText,
                         sourceMeetings: sourceTitles,
-                        groundingConfidence: confidence
+                        groundingConfidence: confidence,
+                        modelLabel: selectedModel
                     )
                 )
                 self.threadStore.syncActiveThread(messages: self.messages, scope: self.contextScope)
@@ -364,18 +365,99 @@ final class ChatBarViewModel {
     /// Retry the last assistant response by removing it and re-sending the preceding user message.
     func retry(messageID: UUID) {
         guard !isStreaming else { return }
-        // Find the message index
         guard let idx = messages.firstIndex(where: { $0.id == messageID }),
               messages[idx].role == .assistant else { return }
-        // Find the preceding user message
         let userIdx = messages[..<idx].lastIndex(where: { $0.role == .user })
         guard let uIdx = userIdx else { return }
         let userText = messages[uIdx].text
-        // Remove the assistant response
+        // Remove both the assistant response AND the user message (send() will re-add it)
         messages.remove(at: idx)
-        // Re-send
+        messages.remove(at: uIdx)
         inputText = userText
         send()
+    }
+
+    /// Retry using a specific LLM provider.
+    func retryWith(messageID: UUID, provider: AppSettings.LLMProvider) {
+        guard !isStreaming, let settings else { return }
+        guard let idx = messages.firstIndex(where: { $0.id == messageID }),
+              messages[idx].role == .assistant else { return }
+        let userIdx = messages[..<idx].lastIndex(where: { $0.role == .user })
+        guard let uIdx = userIdx else { return }
+        let userText = messages[uIdx].text
+
+        // Remove both messages
+        messages.remove(at: idx)
+        messages.remove(at: uIdx)
+
+        // Create a fresh client for the target provider
+        guard let client = makeClientForProvider(provider, settings: settings, modelManager: modelManager) else { return }
+        let model = defaultModelForProvider(provider, settings: settings)
+
+        // Build context + send directly via the client (bypass chat stream entirely)
+        isStreaming = true
+        currentStreamingText = ""
+
+        // Re-add user message
+        messages.append(ChatBarMessage(role: .user, text: userText))
+        threadStore.syncActiveThread(messages: messages, scope: contextScope)
+
+        let contextBundle = contextBuilder.buildContextBundle(for: userText, scope: contextScope)
+        let history: [LLMChatMessage] = messages.dropLast().map { msg in
+            LLMChatMessage(role: msg.role == .user ? "user" : "assistant", content: msg.text)
+        }
+
+        let dateString = ISO8601DateFormatter.string(from: Date(), timeZone: .current, formatOptions: [.withFullDate])
+        let systemPrompt = """
+            You are LidIA, an intelligent meeting assistant. Today is \(dateString).
+            Be concise. 1-3 sentences for simple requests. No filler. No emojis.
+            Never output XML tags or JSON tool calls.
+            Base answers only on the provided meeting context.
+
+            Meeting context:
+            \(contextBundle.contextText)
+            """
+
+        var chatMessages: [LLMChatMessage] = [.init(role: "system", content: systemPrompt)]
+        chatMessages.append(contentsOf: history)
+        chatMessages.append(.init(role: "user", content: userText))
+
+        let capturedMessages = chatMessages
+
+        streamTask?.cancel()
+        streamTask = Task { [weak self] in
+            guard let self else { return }
+            defer { self.isStreaming = false }
+
+            do {
+                let response = try await client.chat(messages: capturedMessages, model: model, format: nil)
+                let cleaned = VoiceToolExecutor.stripToolMarkers(response)
+                let sourceTitles = self.contextBuilder.deriveSourceTitles(
+                    answer: cleaned,
+                    candidateTitles: contextBundle.candidateSourceTitles
+                )
+                let confidence = self.contextBuilder.deriveGroundingConfidence(
+                    answer: cleaned,
+                    sourceCount: sourceTitles.count
+                )
+                self.messages.append(ChatBarMessage(
+                    role: .assistant,
+                    text: cleaned,
+                    sourceMeetings: sourceTitles,
+                    groundingConfidence: confidence,
+                    modelLabel: "\(provider.rawValue): \(model)"
+                ))
+                self.threadStore.syncActiveThread(messages: self.messages, scope: self.contextScope)
+            } catch {
+                self.messages.append(ChatBarMessage(
+                    role: .assistant,
+                    text: "[Error: \(error.localizedDescription)]",
+                    groundingConfidence: .low,
+                    modelLabel: provider.rawValue
+                ))
+            }
+            self.currentStreamingText = ""
+        }
     }
 
     // MARK: - Conversation Management

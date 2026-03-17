@@ -188,8 +188,22 @@ struct LidIAApp: App {
                         backgroundContext = ctx
                     }
 
+                    // Recovery: reset any meetings stuck in .processing from a previous crash
+                    let ctx = sharedModelContainer.mainContext
+                    let allMeetings = (try? ctx.fetch(FetchDescriptor<Meeting>())) ?? []
+                    for meeting in allMeetings where meeting.status == .processing {
+                        appLogger.warning("Recovering stuck meeting: \(meeting.title)")
+                        if meeting.rawTranscript.isEmpty {
+                            meeting.status = .failed
+                            meeting.processingError = "Processing was interrupted. Use Regenerate to retry."
+                        } else {
+                            meeting.status = .queued
+                        }
+                    }
+                    try? ctx.save()
+
                     // Demo mode: seed with realistic dummy data for screenshots
-                    if DemoDataSeeder.isDemoMode {
+                 if DemoDataSeeder.isDemoMode {
                         DemoDataSeeder.seed(context: sharedModelContainer.mainContext)
                         // Disable live calendar so real events don't show
                         settings.googleCalendarEnabled = true
