@@ -6,6 +6,13 @@ struct LLMSettingsTab: View {
     @State private var modelFetchError: String?
     @AppStorage("settings.showAdvancedModels") private var showAdvancedModels = false
 
+    // Custom model entry state
+    private static let customSentinel = "__custom__"
+    @State private var customDefaultModel = ""
+    @State private var customQueryModel = ""
+    @State private var customSummaryModel = ""
+    @State private var customFallbackModel = ""
+
     // API key validation state
     @State private var openaiKeyStatus: APIKeyStatus = .untested
     @State private var anthropicKeyStatus: APIKeyStatus = .untested
@@ -252,26 +259,26 @@ struct LLMSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Picker("Default Model", selection: defaultModelBinding) {
-                    Text("Auto (Recommended)").tag("")
-                    ForEach(modelsForMenu(selection: defaultModelBinding.wrappedValue), id: \.self) { model in
-                        Text(model).tag(model)
-                    }
-                }
+                modelPicker(
+                    label: "Default Model",
+                    binding: defaultModelBinding,
+                    customText: $customDefaultModel,
+                    emptyLabel: "Auto (Recommended)"
+                )
 
-                Picker("Query Model", selection: $settings.queryModel) {
-                    Text("(Use Default / Auto)").tag("")
-                    ForEach(modelsForMenu(selection: settings.queryModel), id: \.self) { model in
-                        Text(model).tag(model)
-                    }
-                }
+                modelPicker(
+                    label: "Query Model",
+                    binding: $settings.queryModel,
+                    customText: $customQueryModel,
+                    emptyLabel: "(Use Default / Auto)"
+                )
 
-                Picker("Summary Model", selection: $settings.summaryModel) {
-                    Text("(Use Default / Auto)").tag("")
-                    ForEach(modelsForMenu(selection: settings.summaryModel), id: \.self) { model in
-                        Text(model).tag(model)
-                    }
-                }
+                modelPicker(
+                    label: "Summary Model",
+                    binding: $settings.summaryModel,
+                    customText: $customSummaryModel,
+                    emptyLabel: "(Use Default / Auto)"
+                )
             }
 
             // Model Routing (Advanced)
@@ -298,7 +305,7 @@ struct LLMSettingsTab: View {
                 }
 
                 if !settings.fallbackProvider.isEmpty {
-                    TextField("Fallback Model (blank = auto)", text: $settings.fallbackModel)
+                    fallbackModelPicker()
                 }
             }
         }
@@ -424,6 +431,140 @@ struct LLMSettingsTab: View {
             return ModelMenuCatalog.curatedModels(for: provider, availableModels: settings.availableModels)
         }
         return ModelMenuCatalog.knownModels(for: provider)
+    }
+
+    // MARK: - Model Picker with Custom Option
+
+    /// A Picker that shows fetched/known models plus a "Custom..." option with inline TextField.
+    @ViewBuilder
+    private func modelPicker(
+        label: String,
+        binding: Binding<String>,
+        customText: Binding<String>,
+        emptyLabel: String
+    ) -> some View {
+        let models = modelsForMenu(selection: binding.wrappedValue)
+        let isCustom = binding.wrappedValue == Self.customSentinel
+        let isUnknownModel = !binding.wrappedValue.isEmpty
+            && binding.wrappedValue != Self.customSentinel
+            && !models.contains(binding.wrappedValue)
+
+        // Picker selection: map unknown custom values to the sentinel
+        let pickerSelection = Binding<String>(
+            get: {
+                if isCustom || isUnknownModel {
+                    return Self.customSentinel
+                }
+                return binding.wrappedValue
+            },
+            set: { newValue in
+                if newValue == Self.customSentinel {
+                    // Switching to custom — seed the text field with current value if it was a real model
+                    if !binding.wrappedValue.isEmpty && binding.wrappedValue != Self.customSentinel {
+                        customText.wrappedValue = binding.wrappedValue
+                    }
+                    binding.wrappedValue = Self.customSentinel
+                } else {
+                    customText.wrappedValue = ""
+                    binding.wrappedValue = newValue
+                }
+            }
+        )
+
+        VStack(alignment: .leading, spacing: 4) {
+            Picker(label, selection: pickerSelection) {
+                Text(emptyLabel).tag("")
+                if !models.isEmpty {
+                    Divider()
+                    ForEach(models, id: \.self) { model in
+                        Text(model).tag(model)
+                    }
+                }
+                Divider()
+                Text("Custom\u{2026}").tag(Self.customSentinel)
+            }
+
+            if isCustom || isUnknownModel {
+                TextField("Model ID", text: customText)
+                    .textFieldStyle(.roundedBorder)
+                    .onAppear {
+                        // Seed custom text from the current stored value
+                        if isUnknownModel && customText.wrappedValue.isEmpty {
+                            customText.wrappedValue = binding.wrappedValue
+                        }
+                    }
+                    .onChange(of: customText.wrappedValue) { _, newText in
+                        if !newText.isEmpty {
+                            binding.wrappedValue = newText
+                        }
+                    }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func fallbackModelPicker() -> some View {
+        let fallbackLLMProvider = AppSettings.LLMProvider(rawValue: settings.fallbackProvider)
+        let models: [String] = {
+            if let provider = fallbackLLMProvider {
+                return modelsForRouteProvider(provider)
+            }
+            return []
+        }()
+
+        let isCustom = settings.fallbackModel == Self.customSentinel
+        let isUnknownModel = !settings.fallbackModel.isEmpty
+            && settings.fallbackModel != Self.customSentinel
+            && !models.contains(settings.fallbackModel)
+
+        let pickerSelection = Binding<String>(
+            get: {
+                if isCustom || isUnknownModel {
+                    return Self.customSentinel
+                }
+                return settings.fallbackModel
+            },
+            set: { newValue in
+                if newValue == Self.customSentinel {
+                    if !settings.fallbackModel.isEmpty && settings.fallbackModel != Self.customSentinel {
+                        customFallbackModel = settings.fallbackModel
+                    }
+                    settings.fallbackModel = Self.customSentinel
+                } else {
+                    customFallbackModel = ""
+                    settings.fallbackModel = newValue
+                }
+            }
+        )
+
+        VStack(alignment: .leading, spacing: 4) {
+            Picker("Fallback Model", selection: pickerSelection) {
+                Text("Auto").tag("")
+                if !models.isEmpty {
+                    Divider()
+                    ForEach(models, id: \.self) { model in
+                        Text(model).tag(model)
+                    }
+                }
+                Divider()
+                Text("Custom\u{2026}").tag(Self.customSentinel)
+            }
+
+            if isCustom || isUnknownModel {
+                TextField("Model ID", text: $customFallbackModel)
+                    .textFieldStyle(.roundedBorder)
+                    .onAppear {
+                        if isUnknownModel && customFallbackModel.isEmpty {
+                            customFallbackModel = settings.fallbackModel
+                        }
+                    }
+                    .onChange(of: customFallbackModel) { _, newText in
+                        if !newText.isEmpty {
+                            settings.fallbackModel = newText
+                        }
+                    }
+            }
+        }
     }
 
     private func modelsForMenu(selection: String) -> [String] {

@@ -97,7 +97,7 @@ final class MeetingStore {
             throw StoreError.notFound(storePath)
         }
         var handle: OpaquePointer?
-        let flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX
+        let flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX
         guard sqlite3_open_v2(storePath, &handle, flags, nil) == SQLITE_OK else {
             throw StoreError.openFailed(String(cString: sqlite3_errmsg(handle!)))
         }
@@ -210,6 +210,155 @@ final class MeetingStore {
         }
     }
 
+    // MARK: - Write Operations
+
+    func createActionItem(title: String, assignee: String?, deadline: String?, meetingID: String?) throws -> [String: AnyCodable] {
+        let uuid = UUID().uuidString
+        var meetingPK: AnyCodable = .null
+
+        // Resolve meeting UUID to Z_PK if provided
+        if let meetingID {
+            let pkRows = try query("SELECT Z_PK FROM ZMEETING WHERE ZID = ?", bind: [.string(meetingID)])
+            guard let row = pkRows.first, let pk = row["Z_PK"] else {
+                throw StoreError.queryFailed("Meeting not found with ID: \(meetingID)")
+            }
+            meetingPK = pk
+        }
+
+        // Get the next Z_PK
+        let maxRows = try query("SELECT COALESCE(MAX(Z_PK), 0) AS MAXPK FROM ZACTIONITEM", bind: [])
+        var nextPK = 1
+        if let row = maxRows.first, case .int(let v) = row["MAXPK"] {
+            nextPK = v + 1
+        }
+
+        // Get Z_ENT for ACTIONITEM entity
+        let entRows = try query("SELECT Z_ENT FROM Z_PRIMARYKEY WHERE Z_NAME = 'ActionItem'", bind: [])
+        var zEnt = 1
+        if let row = entRows.first, case .int(let v) = row["Z_ENT"] {
+            zEnt = v
+        }
+
+        let sql = "INSERT INTO ZACTIONITEM (Z_PK, Z_ENT, Z_OPT, ZID, ZTITLE, ZASSIGNEE, ZDEADLINE, ZISCOMPLETED, ZMEETING) VALUES (?, ?, 1, ?, ?, ?, ?, 0, ?)"
+        let bindings: [AnyCodable] = [
+            .int(nextPK),
+            .int(zEnt),
+            .string(uuid),
+            .string(title),
+            assignee.map { .string($0) } ?? .null,
+            deadline.map { .string($0) } ?? .null,
+            meetingPK
+        ]
+        try execute(sql, bind: bindings)
+
+        // Update Z_PRIMARYKEY sequence
+        try execute("UPDATE Z_PRIMARYKEY SET Z_MAX = ? WHERE Z_NAME = 'ActionItem'", bind: [.int(nextPK)])
+
+        return [
+            "id": .string(uuid),
+            "title": .string(title),
+            "assignee": assignee.map { .string($0) } ?? .null,
+            "deadline": deadline.map { .string($0) } ?? .null,
+            "isCompleted": .bool(false)
+        ]
+    }
+
+    func updateActionItem(uuid: String, title: String?, assignee: String?, deadline: String?, isCompleted: Bool?) throws -> [String: AnyCodable] {
+        // Verify item exists
+        let existing = try query("SELECT Z_PK FROM ZACTIONITEM WHERE ZID = ?", bind: [.string(uuid)])
+        guard existing.first != nil else {
+            throw StoreError.queryFailed("Action item not found with ID: \(uuid)")
+        }
+
+        var setClauses: [String] = []
+        var bindings: [AnyCodable] = []
+
+        if let title {
+            setClauses.append("ZTITLE = ?")
+            bindings.append(.string(title))
+        }
+        if let assignee {
+            setClauses.append("ZASSIGNEE = ?")
+            bindings.append(.string(assignee))
+        }
+        if let deadline {
+            setClauses.append("ZDEADLINE = ?")
+            bindings.append(.string(deadline))
+        }
+        if let isCompleted {
+            setClauses.append("ZISCOMPLETED = ?")
+            bindings.append(.int(isCompleted ? 1 : 0))
+        }
+
+        guard !setClauses.isEmpty else {
+            throw StoreError.queryFailed("No fields to update")
+        }
+
+        let sql = "UPDATE ZACTIONITEM SET \(setClauses.joined(separator: ", ")) WHERE ZID = ?"
+        bindings.append(.string(uuid))
+        try execute(sql, bind: bindings)
+
+        // Return updated item
+        let updated = try query("SELECT ZTITLE, ZASSIGNEE, ZDEADLINE, ZISCOMPLETED, ZID FROM ZACTIONITEM WHERE ZID = ?", bind: [.string(uuid)])
+        guard let item = updated.first else {
+            throw StoreError.queryFailed("Failed to read updated action item")
+        }
+
+        var dict: [String: AnyCodable] = [:]
+        dict["id"] = .string(uuid)
+        dict["title"] = item["ZTITLE"] ?? .null
+        dict["assignee"] = item["ZASSIGNEE"] ?? .null
+        dict["deadline"] = item["ZDEADLINE"] ?? .null
+        if case .int(let v) = item["ZISCOMPLETED"] {
+            dict["isCompleted"] = .bool(v != 0)
+        } else {
+            dict["isCompleted"] = .bool(false)
+        }
+        return dict
+    }
+
+    func deleteActionItem(uuid: String) throws {
+        let existing = try query("SELECT Z_PK FROM ZACTIONITEM WHERE ZID = ?", bind: [.string(uuid)])
+        guard existing.first != nil else {
+            throw StoreError.queryFailed("Action item not found with ID: \(uuid)")
+        }
+        try execute("DELETE FROM ZACTIONITEM WHERE ZID = ?", bind: [.string(uuid)])
+    }
+
+    func markActionItemDone(uuid: String) throws -> [String: AnyCodable] {
+        let existing = try query("SELECT Z_PK FROM ZACTIONITEM WHERE ZID = ?", bind: [.string(uuid)])
+        guard existing.first != nil else {
+            throw StoreError.queryFailed("Action item not found with ID: \(uuid)")
+        }
+        try execute("UPDATE ZACTIONITEM SET ZISCOMPLETED = 1 WHERE ZID = ?", bind: [.string(uuid)])
+
+        let updated = try query("SELECT ZTITLE, ZASSIGNEE, ZDEADLINE, ZISCOMPLETED, ZID FROM ZACTIONITEM WHERE ZID = ?", bind: [.string(uuid)])
+        guard let item = updated.first else {
+            throw StoreError.queryFailed("Failed to read updated action item")
+        }
+        var dict: [String: AnyCodable] = [:]
+        dict["id"] = .string(uuid)
+        dict["title"] = item["ZTITLE"] ?? .null
+        dict["assignee"] = item["ZASSIGNEE"] ?? .null
+        dict["deadline"] = item["ZDEADLINE"] ?? .null
+        dict["isCompleted"] = .bool(true)
+        return dict
+    }
+
+    func updateMeetingNotes(uuid: String, notes: String) throws -> [String: AnyCodable] {
+        let existing = try query("SELECT Z_PK, ZTITLE FROM ZMEETING WHERE ZID = ?", bind: [.string(uuid)])
+        guard let row = existing.first else {
+            throw StoreError.queryFailed("Meeting not found with ID: \(uuid)")
+        }
+        try execute("UPDATE ZMEETING SET ZNOTES = ? WHERE ZID = ?", bind: [.string(notes), .string(uuid)])
+
+        return [
+            "id": .string(uuid),
+            "title": row["ZTITLE"] ?? .null,
+            "notes": .string(notes)
+        ]
+    }
+
     // MARK: - Helpers
 
     private func meetingRow(_ row: [String: AnyCodable]) -> [String: AnyCodable] {
@@ -274,6 +423,28 @@ final class MeetingStore {
             results.append(row)
         }
         return results
+    }
+
+    private func execute(_ sql: String, bind: [AnyCodable]) throws {
+        guard let db else { throw StoreError.notOpen }
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            throw StoreError.queryFailed(String(cString: sqlite3_errmsg(db)))
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        for (i, val) in bind.enumerated() {
+            let idx = Int32(i + 1)
+            switch val {
+            case .int(let v): sqlite3_bind_int64(stmt, idx, Int64(v))
+            case .string(let v): sqlite3_bind_text(stmt, idx, (v as NSString).utf8String, -1, nil)
+            default: sqlite3_bind_null(stmt, idx)
+            }
+        }
+
+        guard sqlite3_step(stmt) == SQLITE_DONE else {
+            throw StoreError.queryFailed(String(cString: sqlite3_errmsg(db)))
+        }
     }
 
     enum StoreError: LocalizedError {
@@ -486,6 +657,108 @@ final class MCPServer {
                     ]),
                     "required": .array([.string("meeting_id")])
                 ])
+            ]),
+            .dict([
+                "name": .string("create_action_item"),
+                "description": .string("Create a new action item, optionally linked to a meeting"),
+                "inputSchema": .dict([
+                    "type": .string("object"),
+                    "properties": .dict([
+                        "title": .dict([
+                            "type": .string("string"),
+                            "description": .string("The title/description of the action item")
+                        ]),
+                        "assignee": .dict([
+                            "type": .string("string"),
+                            "description": .string("Person assigned to this action item")
+                        ]),
+                        "deadline": .dict([
+                            "type": .string("string"),
+                            "description": .string("Deadline in YYYY-MM-DD format")
+                        ]),
+                        "meeting_id": .dict([
+                            "type": .string("string"),
+                            "description": .string("UUID of the meeting to link this action item to")
+                        ])
+                    ]),
+                    "required": .array([.string("title")])
+                ])
+            ]),
+            .dict([
+                "name": .string("update_action_item"),
+                "description": .string("Update an existing action item's title, assignee, deadline, or completion status"),
+                "inputSchema": .dict([
+                    "type": .string("object"),
+                    "properties": .dict([
+                        "id": .dict([
+                            "type": .string("string"),
+                            "description": .string("The UUID of the action item to update")
+                        ]),
+                        "title": .dict([
+                            "type": .string("string"),
+                            "description": .string("New title for the action item")
+                        ]),
+                        "assignee": .dict([
+                            "type": .string("string"),
+                            "description": .string("New assignee for the action item")
+                        ]),
+                        "deadline": .dict([
+                            "type": .string("string"),
+                            "description": .string("New deadline in YYYY-MM-DD format")
+                        ]),
+                        "is_completed": .dict([
+                            "type": .string("boolean"),
+                            "description": .string("Whether the action item is completed")
+                        ])
+                    ]),
+                    "required": .array([.string("id")])
+                ])
+            ]),
+            .dict([
+                "name": .string("delete_action_item"),
+                "description": .string("Delete an action item by its UUID"),
+                "inputSchema": .dict([
+                    "type": .string("object"),
+                    "properties": .dict([
+                        "id": .dict([
+                            "type": .string("string"),
+                            "description": .string("The UUID of the action item to delete")
+                        ])
+                    ]),
+                    "required": .array([.string("id")])
+                ])
+            ]),
+            .dict([
+                "name": .string("mark_action_item_done"),
+                "description": .string("Mark an action item as completed"),
+                "inputSchema": .dict([
+                    "type": .string("object"),
+                    "properties": .dict([
+                        "id": .dict([
+                            "type": .string("string"),
+                            "description": .string("The UUID of the action item to mark as done")
+                        ])
+                    ]),
+                    "required": .array([.string("id")])
+                ])
+            ]),
+            .dict([
+                "name": .string("update_meeting_notes"),
+                "description": .string("Update or set the notes field of a meeting"),
+                "inputSchema": .dict([
+                    "type": .string("object"),
+                    "properties": .dict([
+                        "id": .dict([
+                            "type": .string("string"),
+                            "description": .string("The UUID of the meeting")
+                        ]),
+                        "notes": .dict([
+                            "type": .string("string"),
+                            "description": .string("The notes content to set for the meeting")
+                        ])
+                    ]),
+                    "required": .array([.string("id"), .string("notes")])
+                ])
             ])
         ]
         return JSONRPCResponse(id: id, result: .dict(["tools": .array(tools)]), error: nil)
@@ -529,6 +802,54 @@ final class MCPServer {
                     return toolError(id: id, message: "Meeting not found with ID: \(meetingID)")
                 }
                 return toolResult(id: id, content: [.dict(meeting)])
+
+            case "create_action_item":
+                guard let title = arguments["title"]?.stringValue else {
+                    return toolError(id: id, message: "Missing required parameter: title")
+                }
+                let assignee = arguments["assignee"]?.stringValue
+                let deadline = arguments["deadline"]?.stringValue
+                let meetingID = arguments["meeting_id"]?.stringValue
+                let result = try store.createActionItem(title: title, assignee: assignee, deadline: deadline, meetingID: meetingID)
+                return toolResult(id: id, content: [.dict(result)])
+
+            case "update_action_item":
+                guard let itemID = arguments["id"]?.stringValue else {
+                    return toolError(id: id, message: "Missing required parameter: id")
+                }
+                let title = arguments["title"]?.stringValue
+                let assignee = arguments["assignee"]?.stringValue
+                let deadline = arguments["deadline"]?.stringValue
+                var isCompleted: Bool? = nil
+                if case .bool(let v) = arguments["is_completed"] {
+                    isCompleted = v
+                }
+                let result = try store.updateActionItem(uuid: itemID, title: title, assignee: assignee, deadline: deadline, isCompleted: isCompleted)
+                return toolResult(id: id, content: [.dict(result)])
+
+            case "delete_action_item":
+                guard let itemID = arguments["id"]?.stringValue else {
+                    return toolError(id: id, message: "Missing required parameter: id")
+                }
+                try store.deleteActionItem(uuid: itemID)
+                return toolResult(id: id, content: [.dict(["deleted": .bool(true), "id": .string(itemID)])])
+
+            case "mark_action_item_done":
+                guard let itemID = arguments["id"]?.stringValue else {
+                    return toolError(id: id, message: "Missing required parameter: id")
+                }
+                let result = try store.markActionItemDone(uuid: itemID)
+                return toolResult(id: id, content: [.dict(result)])
+
+            case "update_meeting_notes":
+                guard let meetingID = arguments["id"]?.stringValue else {
+                    return toolError(id: id, message: "Missing required parameter: id")
+                }
+                guard let notes = arguments["notes"]?.stringValue else {
+                    return toolError(id: id, message: "Missing required parameter: notes")
+                }
+                let result = try store.updateMeetingNotes(uuid: meetingID, notes: notes)
+                return toolResult(id: id, content: [.dict(result)])
 
             default:
                 return JSONRPCResponse(id: id, result: nil, error: JSONRPCError(code: -32602, message: "Unknown tool: \(toolName)"))

@@ -22,6 +22,7 @@ struct MeetingDetailView: View {
     @State private var cachedSegments: [TimedSegment] = []
     @State private var cachedHasSpeakerData = false
     @State private var cachedHasSpeakerNames = false
+    @State private var cachedHasSpeakerIDs = false
     @State private var headerCollapsed = false
     @State private var recipeResult = ""
     @State private var isRunningRecipe = false
@@ -621,43 +622,23 @@ struct MeetingDetailView: View {
 
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: cachedHasSpeakerData ? 12 : 8) {
+                    LazyVStack(alignment: .leading, spacing: 8) {
                         if !cachedSegments.isEmpty {
-                            if cachedHasSpeakerData {
+                            if cachedHasSpeakerData || cachedHasSpeakerNames || cachedHasSpeakerIDs {
+                                // Chat bubbles: use isLocalSpeaker if available, fall back to speaker ID for alternating sides
                                 ForEach(Array(cachedSegments.enumerated()), id: \.offset) { index, segment in
                                     speakerBubble(segment: segment, index: index)
                                 }
-                            } else if cachedHasSpeakerNames {
-                                // Speaker names from diarization but no local speaker data —
-                                // show speaker-labeled text without left/right alignment
-                                ForEach(Array(cachedSegments.enumerated()), id: \.offset) { index, segment in
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        if let name = segment.speakerName,
-                                           index == 0 || cachedSegments[index - 1].speakerName != name {
-                                            Text(name)
-                                                .font(.caption)
-                                                .fontWeight(.semibold)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        Text(segment.text)
-                                            .font(.body)
-                                            .textSelection(.enabled)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 2)
-                                    .padding(.horizontal, 6)
-                                    .background(highlightBackground(for: segment), in: RoundedRectangle(cornerRadius: 6))
-                                    .id("segment-\(index)")
-                                }
                             } else {
+                                // No speaker data — show as simple bubbles
                                 ForEach(Array(cachedSegments.enumerated()), id: \.offset) { index, segment in
                                     Text(segment.text)
                                         .font(.body)
                                         .textSelection(.enabled)
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.vertical, 2)
-                                        .padding(.horizontal, 6)
-                                        .background(highlightBackground(for: segment), in: RoundedRectangle(cornerRadius: 6))
                                         .id("segment-\(index)")
                                 }
                             }
@@ -867,6 +848,11 @@ struct MeetingDetailView: View {
         normalizedTimingWords.contains { $0.speakerName != nil }
     }
 
+    /// True when speaker IDs are available from diarization (even without names or isLocalSpeaker).
+    private var hasSpeakerIDs: Bool {
+        normalizedTimingWords.contains { $0.speaker != nil }
+    }
+
     private var timedSegments: [TimedSegment] {
         let words = normalizedTimingWords
         guard !words.isEmpty else { return [] }
@@ -885,7 +871,7 @@ struct MeetingDetailView: View {
             let wordEnd = max(wordStart, word.end)
             let hitDurationLimit = !currentWords.isEmpty && (wordEnd - segmentStart > 12)
             let hitWordLimit = currentWords.count >= 40
-            let speakerChanged = word.speaker != currentSpeaker && word.speakerName != nil
+            let speakerChanged = word.speaker != nil && word.speaker != currentSpeaker
             let localChanged = word.isLocalSpeaker != currentIsLocal
 
             if hitDurationLimit || hitWordLimit || speakerChanged || localChanged {
@@ -931,8 +917,28 @@ struct MeetingDetailView: View {
 
     // MARK: - Speaker Bubble
 
+    private static let bubbleColors: [Color] = [.blue, .purple, .orange, .teal, .pink, .green]
+
     private func speakerBubble(segment: TimedSegment, index: Int) -> some View {
-        let isLocal = segment.isLocalSpeaker == true
+        // Determine if this is "me": prefer isLocalSpeaker, fall back to speaker ID 0
+        let isLocal: Bool
+        if let local = segment.isLocalSpeaker {
+            isLocal = local
+        } else if let speaker = segment.speaker {
+            // Without system audio, assume the most frequent speaker is "me"
+            // (already computed by assignLocalSpeaker majority vote)
+            isLocal = speaker == 0
+        } else {
+            isLocal = false
+        }
+
+        let bubbleColor: Color = {
+            if isLocal { return .accentColor }
+            if let speaker = segment.speaker {
+                return Self.bubbleColors[speaker % Self.bubbleColors.count]
+            }
+            return .primary
+        }()
 
         // Show timestamp marker when there's a gap > 30s between segments
         let showTimestamp = index > 0 && (segment.start - cachedSegments[index - 1].end) > 30
@@ -952,7 +958,7 @@ struct MeetingDetailView: View {
                 .padding(.horizontal, 12)
                 .background(
                     highlightBackground(for: segment) == .clear
-                        ? (isLocal ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.08))
+                        ? bubbleColor.opacity(isLocal ? 0.12 : 0.08)
                         : highlightBackground(for: segment),
                     in: RoundedRectangle(cornerRadius: 16)
                 )
@@ -986,6 +992,7 @@ struct MeetingDetailView: View {
         cachedSegments = timedSegments
         cachedHasSpeakerData = hasSpeakerData
         cachedHasSpeakerNames = hasSpeakerNames
+        cachedHasSpeakerIDs = hasSpeakerIDs
     }
 
     // MARK: - AI Actions
