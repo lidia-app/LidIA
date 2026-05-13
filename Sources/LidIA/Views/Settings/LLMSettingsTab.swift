@@ -4,6 +4,8 @@ struct LLMSettingsTab: View {
     @Bindable var settings: AppSettings
     @Environment(ModelManager.self) private var modelManager
     @State private var modelFetchError: String?
+    @State private var modelFetchSuccess: String?
+    @State private var isFetchingModels = false
     @AppStorage("settings.showAdvancedModels") private var showAdvancedModels = false
 
     // Custom model entry state
@@ -110,6 +112,8 @@ struct LLMSettingsTab: View {
                 settings.availableModels = []
                 settings.queryModel = ""
                 settings.summaryModel = ""
+                modelFetchError = nil
+                modelFetchSuccess = nil
             }
 
             switch settings.llmProvider {
@@ -246,10 +250,20 @@ struct LLMSettingsTab: View {
 
             if settings.llmProvider != .mlx {
                 HStack(spacing: 10) {
-                    Button("Fetch Models") {
+                    Button {
                         Task { await fetchModels() }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if isFetchingModels {
+                                ProgressView().controlSize(.small)
+                                Text("Fetching\u{2026}")
+                            } else {
+                                Text("Fetch Models")
+                            }
+                        }
                     }
                     .buttonStyle(.glass)
+                    .disabled(isFetchingModels)
 
                     Toggle("Advanced\u{2026}", isOn: $showAdvancedModels)
                         .toggleStyle(.checkbox)
@@ -259,6 +273,10 @@ struct LLMSettingsTab: View {
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.red)
+                } else if let success = modelFetchSuccess {
+                    Label(success, systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
                 }
 
                 Text("Auto mode lets LidIA pick the best model for each task.")
@@ -601,6 +619,10 @@ struct LLMSettingsTab: View {
     @MainActor
     private func fetchModels() async {
         modelFetchError = nil
+        modelFetchSuccess = nil
+        isFetchingModels = true
+        defer { isFetchingModels = false }
+
         // Discover models for the provider the user is configuring here —
         // not for whatever the chat route override happens to point at.
         guard let client = makeClientForProvider(settings.llmProvider, settings: settings, modelManager: modelManager) else {
@@ -619,6 +641,9 @@ struct LLMSettingsTab: View {
                 default:
                     modelFetchError = "Provider returned no models. You can type a model name manually."
                 }
+            } else {
+                let plural = models.count == 1 ? "" : "s"
+                modelFetchSuccess = "Fetched \(models.count) model\(plural) — pick one in Default Model below."
             }
         } catch {
             switch settings.llmProvider {
