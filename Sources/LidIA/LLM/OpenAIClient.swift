@@ -96,7 +96,14 @@ actor OpenAIClient: LLMClient {
             let modelsResponse = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
             let models = modelsResponse.data.map(\.id)
             log.info("listModels decoded \(models.count) models for host \(self.baseURL.host ?? "?", privacy: .public); skipModelFilter=\(self.skipModelFilter)")
-            if skipModelFilter {
+            // The chatModelPrefixes filter exists only to strip OpenAI's
+            // embeddings/tts/whisper models from the chat picker. Other
+            // OpenAI-compatible endpoints (DeepSeek, Cerebras, OpenRouter,
+            // NVIDIA NIM, LM Studio, …) name models entirely differently
+            // (deepseek-chat, qwen/qwen3.6-27b, …) so applying the filter
+            // strips everything and looks like the endpoint returned nothing.
+            let isOpenAIProper = baseURL.host == "api.openai.com"
+            if skipModelFilter || !isOpenAIProper {
                 return models.sorted()
             }
             return models
