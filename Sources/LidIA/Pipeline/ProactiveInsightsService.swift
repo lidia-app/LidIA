@@ -14,9 +14,10 @@ final class ProactiveInsightsService {
     private var scheduler: Task<Void, Never>?
 
     /// How many minutes before the event start we generate the brief.
-    /// Slightly larger than the system notification window so the dispatcher
-    /// card is ready when the system "5 min before" reminder fires.
-    private let prepWindowMinutes: Int = 15
+    /// Extended to 90 min so users see briefs in the Home Insights section
+    /// well before the meeting (and well before the system "5 min before"
+    /// reminder fires). Deduped per-event so a single brief survives the window.
+    private let prepWindowMinutes: Int = 90
 
     /// Minimum gap between scheduler polls (seconds). Cheap — only reads in-memory
     /// upcomingEvents and a SwiftData query.
@@ -138,26 +139,36 @@ final class ProactiveInsightsService {
             .flatMap(\.actionItems)
             .filter { !$0.isCompleted }
 
-        // No prior context — skip rather than generate empty filler.
-        if related.isEmpty && openItems.isEmpty {
-            Self.logger.info("No prior context for event \(candidate.eventID, privacy: .public); skipping brief")
-            return
-        }
-
+        let hasPriorContext = !related.isEmpty || !openItems.isEmpty
         let contextString = buildContextString(
             candidate: candidate,
             related: related,
-            openItems: openItems
+            openItems: openItems,
+            hasPriorContext: hasPriorContext
         )
 
-        let prompt = """
-        You are a meeting prep assistant. In 2–3 short sentences (no bullets, no preamble), \
-        summarize what the user should know walking into this meeting. Reference the most \
-        relevant prior context and call out open action items only if they're directly relevant. \
-        Be specific. If there's nothing meaningful to surface, say so briefly.
+        let prompt: String
+        if hasPriorContext {
+            prompt = """
+            You are a meeting prep assistant. In 2–3 short sentences (no bullets, no preamble), \
+            summarize what the user should know walking into this meeting. Reference the most \
+            relevant prior context and call out open action items only if they're directly relevant. \
+            Be specific.
 
-        \(contextString)
-        """
+            \(contextString)
+            """
+        } else {
+            // First-encounter brief — no prior meetings with these attendees. Keep it
+            // short, set the stage, and prompt the user to think about what they want.
+            prompt = """
+            You are a meeting prep assistant. The user has no prior meetings with these \
+            attendees on record. In 2 short sentences (no bullets, no preamble), state that this \
+            looks like a first-encounter meeting and suggest one or two concrete things to \
+            think about based on the title and attendees. Do not invent facts.
+
+            \(contextString)
+            """
+        }
 
         let client = makeLLMClient(settings: settings, modelManager: modelManager, taskType: .summarization)
         let model = effectiveModel(for: .summary, settings: settings, taskType: .summarization)
@@ -192,13 +203,20 @@ final class ProactiveInsightsService {
     private func buildContextString(
         candidate: PrepCandidate,
         related: [Meeting],
-        openItems: [ActionItem]
+        openItems: [ActionItem],
+        hasPriorContext: Bool
     ) -> String {
         var lines: [String] = []
         lines.append("UPCOMING MEETING: \(candidate.title)")
         lines.append("STARTS: \(candidate.start.formatted(date: .abbreviated, time: .shortened))")
         let attendeesPreview = candidate.attendees.prefix(6).joined(separator: ", ")
         lines.append("ATTENDEES: \(attendeesPreview)")
+
+        if !hasPriorContext {
+            lines.append("")
+            lines.append("(No prior meetings with these attendees on record.)")
+            return lines.joined(separator: "\n")
+        }
 
         if let last = related.first {
             lines.append("")

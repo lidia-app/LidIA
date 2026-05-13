@@ -605,8 +605,25 @@ struct LLMSettingsTab: View {
         do {
             let models = try await client.listModels()
             settings.availableModels = models
+            if models.isEmpty {
+                switch settings.llmProvider {
+                case .lmStudio:
+                    modelFetchError = "LM Studio returned no models. Open LM Studio → Developer tab, click Start Server, and make sure a model is loaded."
+                case .ollama:
+                    modelFetchError = "Ollama returned no models. Pull a model first (e.g. `ollama pull qwen3:4b`)."
+                default:
+                    modelFetchError = "Provider returned no models. You can type a model name manually."
+                }
+            }
         } catch {
-            modelFetchError = "Failed to fetch models: \(error.localizedDescription)"
+            switch settings.llmProvider {
+            case .lmStudio:
+                modelFetchError = "Could not reach LM Studio at \(settings.lmStudioURL): \(error.localizedDescription). Make sure LM Studio is open and the Developer-tab server is started."
+            case .ollama:
+                modelFetchError = "Could not reach Ollama at \(settings.ollamaURL): \(error.localizedDescription)."
+            default:
+                modelFetchError = "Failed to fetch models: \(error.localizedDescription)"
+            }
         }
     }
 

@@ -65,10 +65,9 @@ struct HomeView: View {
                     nextUpCard(event)
                 }
 
-                // For You nudges
-                if !unreadNotifications.isEmpty {
-                    nudgesSection
-                }
+                // Insights — proactive briefs + nudges (always visible so users
+                // discover the surface even when empty).
+                insightsSection
 
                 // Action items focus
                 if !openActionItems.isEmpty {
@@ -180,17 +179,95 @@ struct HomeView: View {
 
     // MARK: - Nudges
 
-    private var nudgesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private var prepNotifications: [InboxNotification] {
+        unreadNotifications.filter { $0.type == "meeting_prep" }
+    }
+    private var otherNotifications: [InboxNotification] {
+        unreadNotifications.filter { $0.type != "meeting_prep" }
+    }
+
+    private var insightsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("For You", systemImage: "sparkles")
+                Label("Insights", systemImage: "sparkles")
                     .font(.headline)
                 Spacer()
+                if unreadNotifications.isEmpty {
+                    Text("Quiet for now")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
             }
 
-            ForEach(unreadNotifications.prefix(5)) { notif in
+            // Featured: upcoming meeting brief(s)
+            ForEach(prepNotifications.prefix(2)) { notif in
+                meetingPrepCard(notif)
+            }
+
+            // Other dispatcher cards (processed, follow-ups, reminders…)
+            ForEach(otherNotifications.prefix(5)) { notif in
                 dispatcherCard(notif)
             }
+
+            // Empty-state guidance
+            if unreadNotifications.isEmpty {
+                insightsEmptyState
+            }
+        }
+    }
+
+    private var insightsEmptyState: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Briefs for your next meeting appear here ~15 minutes before it starts — covering the last conversation with those attendees, open action items, and what to prepare for.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text("After a meeting, action items, follow-up drafts, and reminders surface here too.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassEffect(.regular.tint(.purple.opacity(0.04)), in: .rect(cornerRadius: 10))
+    }
+
+    private func meetingPrepCard(_ notif: InboxNotification) -> some View {
+        let isHovered = hoveredNudgeID == notif.id
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: notif.typeIcon)
+                    .font(.subheadline)
+                    .foregroundStyle(.purple)
+                Text(notif.title)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                Spacer()
+                Button {
+                    withAnimation { notif.isRead = true }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .frame(width: 16, height: 16)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tertiary)
+                .opacity(isHovered ? 1 : 0)
+            }
+            Text(notif.body)
+                .font(.callout)
+                .foregroundStyle(.primary)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassEffect(
+            .regular.tint(.purple.opacity(isHovered ? 0.10 : 0.06)).interactive(),
+            in: .rect(cornerRadius: 10)
+        )
+        .onHover { h in
+            withAnimation(.easeInOut(duration: 0.12)) { hoveredNudgeID = h ? notif.id : nil }
         }
     }
 
