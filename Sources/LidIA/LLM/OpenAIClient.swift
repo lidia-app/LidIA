@@ -72,7 +72,12 @@ actor OpenAIClient: LLMClient {
             let url = baseURL.appendingPathComponent("models")
             var urlRequest = URLRequest(url: url)
             urlRequest.timeoutInterval = timeoutInterval
-            urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            // Some local servers (LM Studio) ignore the header but tolerate it;
+            // skip it entirely when the apiKey looks like our placeholder so we
+            // don't confuse the server with a malformed Bearer.
+            if !apiKey.isEmpty {
+                urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            }
             let request = urlRequest
 
             let (data, response) = try await withRetry {
@@ -91,14 +96,22 @@ actor OpenAIClient: LLMClient {
                 }
                 .sorted()
         } catch {
-            // If custom endpoint doesn't support /v1/models (e.g. NVIDIA NIM),
-            // return empty — the user can type model names manually
-            if baseURL.host != "api.openai.com" {
+            // Only swallow when the host is a known endpoint that doesn't expose
+            // /v1/models (NVIDIA NIM today). For everything else, propagate so
+            // the user actually sees what went wrong ("Connection refused",
+            // decode error, 401, etc.) instead of an empty silent list.
+            if let host = baseURL.host, Self.knownNoModelsListing.contains(host) {
                 return []
             }
             throw error
         }
     }
+
+    /// Hosts that respond OpenAI-compatibly for `/v1/chat/completions` but do
+    /// not expose `/v1/models` (so we silently fall back to empty + manual entry).
+    private static let knownNoModelsListing: Set<String> = [
+        "integrate.api.nvidia.com"
+    ]
 
     func chat(messages: [LLMChatMessage], model: String, format: LLMResponseFormat?) async throws -> String {
         if apiKey.isEmpty {
