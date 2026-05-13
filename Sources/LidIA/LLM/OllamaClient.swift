@@ -542,6 +542,17 @@ func makeClientForProvider(
     switch provider {
     case .ollama:
         return OllamaClient(baseURL: URL(string: settings.ollamaURL) ?? URL(string: "http://localhost:11434")!, timeoutInterval: 600)
+    case .lmStudio:
+        // LM Studio's OpenAI-compatible server ignores the Authorization header,
+        // but OpenAIClient requires a non-empty apiKey to send requests, so we
+        // pass a placeholder. skipModelFilter=true because LM Studio model IDs
+        // are paths like "qwen2.5-coder-32b-instruct" not "gpt-*"/"o1-*"/etc.
+        return OpenAIClient(
+            apiKey: "lm-studio",
+            baseURL: URL(string: settings.lmStudioURL) ?? URL(string: "http://localhost:1234/v1")!,
+            timeoutInterval: 600,
+            skipModelFilter: true
+        )
     case .mlx:
         guard let modelManager else { return nil }
         return MLXLocalClient(modelManager: modelManager)
@@ -646,6 +657,7 @@ func effectiveModel(for purpose: ModelPurpose, settings: AppSettings, taskType: 
 func defaultModelForProvider(_ provider: AppSettings.LLMProvider, settings: AppSettings) -> String {
     switch provider {
     case .ollama: return settings.ollamaModel.isEmpty ? "qwen3:4b" : settings.ollamaModel
+    case .lmStudio: return settings.lmStudioModel
     case .mlx: return settings.selectedMLXModelID
     case .openai: return settings.openaiModel.isEmpty ? "gpt-4o" : settings.openaiModel
     case .anthropic: return settings.anthropicModel.isEmpty ? "claude-sonnet-4-5-20250514" : settings.anthropicModel
@@ -662,6 +674,8 @@ private func effectiveDefaultModel(settings: AppSettings) -> String {
     switch settings.llmProvider {
     case .ollama:
         selectedModel = settings.ollamaModel
+    case .lmStudio:
+        selectedModel = settings.lmStudioModel
     case .mlx:
         selectedModel = settings.selectedMLXModelID
     case .openai:

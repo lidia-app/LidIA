@@ -133,6 +133,7 @@ struct LidIAApp: App {
     @State private var voiceOrbPanel = VoiceOrbPanelController()
     @State private var syncManager = SyncManager()
     @State private var updateController = UpdateController()
+    @State private var proactiveInsights = ProactiveInsightsService()
     @State private var backgroundContext: ModelContext?
     private let bannerController = MeetingDetectionBannerController()
     private let joinBannerController = MeetingJoinBannerController()
@@ -249,6 +250,14 @@ struct LidIAApp: App {
                         calendarMonitor: googleCalendarMonitor,
                         eventKitManager: eventKitManager,
                         modelContext: backgroundContext!
+                    )
+
+                    proactiveInsights.startScheduler(
+                        settings: settings,
+                        modelContext: backgroundContext!,
+                        modelManager: modelManager,
+                        googleCalendarMonitor: googleCalendarMonitor,
+                        eventKitManager: eventKitManager
                     )
 
                     appLogger.info("Configuring voiceAssistant with backgroundContext=\(backgroundContext != nil)")

@@ -63,6 +63,14 @@ final class AppSettings {
         get { llm.ollamaModel }
         set { llm.ollamaModel = newValue }
     }
+    var lmStudioURL: String {
+        get { llm.lmStudioURL }
+        set { llm.lmStudioURL = newValue }
+    }
+    var lmStudioModel: String {
+        get { llm.lmStudioModel }
+        set { llm.lmStudioModel = newValue }
+    }
     var openaiBaseURL: String {
         get { llm.openaiBaseURL }
         set { llm.openaiBaseURL = newValue }
@@ -470,6 +478,7 @@ final class AppSettings {
 
     enum LLMProvider: String, CaseIterable, Codable, Sendable {
         case ollama = "Ollama"
+        case lmStudio = "LM Studio"
         case mlx = "Local (MLX)"
         case openai = "OpenAI"
         case anthropic = "Anthropic"

@@ -17,6 +17,14 @@ final class LLMSettings {
     var ollamaModel: String = "" {
         didSet { saveDefault(ollamaModel, forKey: "ollamaModel") }
     }
+
+    // LM Studio (OpenAI-compatible local server)
+    var lmStudioURL: String = "http://localhost:1234/v1" {
+        didSet { saveDefault(lmStudioURL, forKey: "lmStudioURL") }
+    }
+    var lmStudioModel: String = "" {
+        didSet { saveDefault(lmStudioModel, forKey: "lmStudioModel") }
+    }
     var openaiBaseURL: String = "https://api.openai.com/v1" {
         didSet { saveDefault(openaiBaseURL, forKey: "openaiBaseURL") }
     }
@@ -104,6 +112,8 @@ final class LLMSettings {
         llmProvider = AppSettings.LLMProvider(rawValue: defaults.string(forKey: "llmProvider") ?? "") ?? .ollama
         ollamaURL = defaults.string(forKey: "ollamaURL") ?? "http://localhost:11434"
         ollamaModel = defaults.string(forKey: "ollamaModel") ?? ""
+        lmStudioURL = defaults.string(forKey: "lmStudioURL") ?? "http://localhost:1234/v1"
+        lmStudioModel = defaults.string(forKey: "lmStudioModel") ?? ""
         var loadedURL = defaults.string(forKey: "openaiBaseURL") ?? "https://api.openai.com/v1"
         // Migrate old URLs that don't include /v1
         if loadedURL == "https://api.openai.com" {

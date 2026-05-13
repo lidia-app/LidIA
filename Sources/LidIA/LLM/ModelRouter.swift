@@ -29,6 +29,8 @@ enum ModelRouter {
             return thinking ?? (settings.openaiModel.isEmpty ? "gpt-4o" : settings.openaiModel)
         case .ollama:
             return settings.ollamaModel
+        case .lmStudio:
+            return settings.lmStudioModel
         case .mlx:
             return settings.selectedMLXModelID
         case .anthropic:

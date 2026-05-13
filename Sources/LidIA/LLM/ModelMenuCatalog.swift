@@ -44,6 +44,10 @@ enum ModelMenuCatalog {
         case .mlx:
             return Array(cleaned)
 
+        case .lmStudio:
+            // LM Studio's loaded models are user-chosen — surface them all (no filter heuristic).
+            return cleaned.prefix(12).map { $0 }
+
         case .cerebras, .deepseek, .nvidiaNIM, .openRouter:
             return cleaned.prefix(6).map { $0 }
         }
@@ -71,6 +75,9 @@ enum ModelMenuCatalog {
             return ["claude-3-5-haiku-latest", "claude-3-7-sonnet-latest", "claude-sonnet-4-20250514"]
         case .ollama:
             return ["qwen2.5:7b-instruct", "llama3.2:3b", "mistral-small"]
+        case .lmStudio:
+            // LM Studio model IDs are user-loaded — discovered via /v1/models at runtime.
+            return []
         case .mlx:
             return ModelManager.availableModels.map(\.id)
         case .cerebras:

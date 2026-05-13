@@ -115,6 +115,11 @@ struct LLMSettingsTab: View {
             switch settings.llmProvider {
             case .ollama:
                 TextField("Ollama URL", text: $settings.ollamaURL)
+            case .lmStudio:
+                TextField("LM Studio URL", text: $settings.lmStudioURL)
+                Text("Default: http://localhost:1234/v1 \u{2014} start the LM Studio server, then click Fetch Models below to discover your loaded models. No API key needed.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             case .mlx:
                 if modelManager.downloadedModels.isEmpty {
                     Text("No models downloaded yet. Download one below to get started.")
@@ -358,6 +363,8 @@ struct LLMSettingsTab: View {
         switch settings.llmProvider {
         case .ollama:
             return $settings.ollamaModel
+        case .lmStudio:
+            return $settings.lmStudioModel
         case .mlx:
             return $settings.selectedMLXModelID
         case .openai:

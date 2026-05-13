@@ -29,6 +29,7 @@ final class InboxNotification {
         case "ticket": "ticket.fill"
         case "processed": "checkmark.circle.fill"
         case "reminder": "clock.fill"
+        case "meeting_prep": "doc.text.magnifyingglass"
         default: "bell.fill"
         }
     }
@@ -42,6 +43,8 @@ final class InboxNotification {
         var ticketTitle: String?
         var meetingTitle: String?
         var actionItemTitle: String?
+        /// External event identifier — used by meeting_prep notifications to dedupe.
+        var eventID: String?
     }
 
     private var parsedPayload: ActionPayloadData? {
@@ -55,6 +58,7 @@ final class InboxNotification {
     var ticketTitle: String? { parsedPayload?.ticketTitle }
     var sourceMeetingTitle: String? { parsedPayload?.meetingTitle }
     var sourceActionItemTitle: String? { parsedPayload?.actionItemTitle }
+    var sourceEventID: String? { parsedPayload?.eventID }
 
     /// Whether this notification has a rich actionable payload (not just passive).
     var isDispatchable: Bool { draft != nil || channel != nil }
@@ -66,7 +70,8 @@ final class InboxNotification {
         channel: String? = nil,
         ticketTitle: String? = nil,
         meetingTitle: String? = nil,
-        actionItemTitle: String? = nil
+        actionItemTitle: String? = nil,
+        eventID: String? = nil
     ) -> String? {
         let payload = ActionPayloadData(
             draft: draft,
@@ -74,7 +79,8 @@ final class InboxNotification {
             channel: channel,
             ticketTitle: ticketTitle,
             meetingTitle: meetingTitle,
-            actionItemTitle: actionItemTitle
+            actionItemTitle: actionItemTitle,
+            eventID: eventID
         )
         guard let data = try? JSONEncoder().encode(payload) else { return nil }
         return String(data: data, encoding: .utf8)
