@@ -172,6 +172,10 @@ final class ProactiveInsightsService {
 
         let client = makeLLMClient(settings: settings, modelManager: modelManager, taskType: .summarization)
         let model = effectiveModel(for: .summary, settings: settings, taskType: .summarization)
+        guard !model.isEmpty else {
+            Self.logger.info("No model configured for summarization (provider: \(settings.llmProvider.rawValue, privacy: .public)); skipping brief")
+            return
+        }
 
         do {
             let brief = try await client.chat(

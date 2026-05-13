@@ -64,7 +64,10 @@ enum ModelMenuCatalog {
         if let firstAvailable = availableModels.first {
             return firstAvailable
         }
-        return knownModels(for: provider).first ?? preferredModels(for: provider)[0]
+        // For providers like LM Studio where models are user-loaded at runtime,
+        // there is no sensible built-in fallback. Return empty so callers can
+        // detect "no model configured" rather than crashing on a force-index.
+        return knownModels(for: provider).first ?? preferredModels(for: provider).first ?? ""
     }
 
     private static func preferredModels(for provider: AppSettings.LLMProvider) -> [String] {
