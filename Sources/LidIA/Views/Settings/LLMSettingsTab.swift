@@ -601,7 +601,12 @@ struct LLMSettingsTab: View {
     @MainActor
     private func fetchModels() async {
         modelFetchError = nil
-        let client = makeLLMClient(settings: settings, modelManager: modelManager, taskType: .chat)
+        // Discover models for the provider the user is configuring here —
+        // not for whatever the chat route override happens to point at.
+        guard let client = makeClientForProvider(settings.llmProvider, settings: settings, modelManager: modelManager) else {
+            modelFetchError = "Provider \(settings.llmProvider.rawValue) is not configured."
+            return
+        }
         do {
             let models = try await client.listModels()
             settings.availableModels = models

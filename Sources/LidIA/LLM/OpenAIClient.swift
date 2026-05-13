@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 // MARK: - OpenAI Request/Response Types
 
@@ -68,8 +69,10 @@ actor OpenAIClient: LLMClient {
     private static let chatModelPrefixes = ["gpt-", "o1", "o3", "o4", "claude"]
 
     func listModels() async throws -> [String] {
+        let log = Logger(subsystem: "io.lidia.app", category: "OpenAIClient")
         do {
             let url = baseURL.appendingPathComponent("models")
+            log.info("listModels GET \(url.absoluteString, privacy: .public)")
             var urlRequest = URLRequest(url: url)
             urlRequest.timeoutInterval = timeoutInterval
             // Some local servers (LM Studio) ignore the header but tolerate it;
@@ -85,8 +88,14 @@ actor OpenAIClient: LLMClient {
             }
             try validateResponse(response, data: data)
 
+            if let body = String(data: data, encoding: .utf8) {
+                let preview = String(body.prefix(400))
+                log.info("listModels response (\(data.count) bytes): \(preview, privacy: .public)")
+            }
+
             let modelsResponse = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
             let models = modelsResponse.data.map(\.id)
+            log.info("listModels decoded \(models.count) models for host \(self.baseURL.host ?? "?", privacy: .public); skipModelFilter=\(self.skipModelFilter)")
             if skipModelFilter {
                 return models.sorted()
             }
