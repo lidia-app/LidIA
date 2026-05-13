@@ -208,7 +208,9 @@ struct EditableActionItemRow: View {
                 }
             } label: {
                 HStack(spacing: 4) {
-                    Text("\u{2192} \(destinationLabel(item.confirmedDestination ?? suggested))")
+                    Image(systemName: "paperplane.fill")
+                        .font(.caption2)
+                    Text(destinationLabel(item.confirmedDestination ?? suggested))
                         .font(.caption2.bold())
                 }
                 .padding(.horizontal, 8)

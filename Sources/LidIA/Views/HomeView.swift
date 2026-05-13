@@ -1,18 +1,20 @@
 import SwiftUI
 import SwiftData
 
+/// Home detail — "What needs your attention" dashboard.
+/// Meetings belong in the Meetings tab, not here.
 struct HomeView: View {
-    private static let dateHeaderFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE, MMM d"
-        return f
-    }()
+    @Query(filter: #Predicate<ActionItem> { !$0.isCompleted })
+    private var openActionItems: [ActionItem]
+    @Query(filter: #Predicate<InboxNotification> { !$0.isRead }, sort: \InboxNotification.createdAt, order: .reverse)
+    private var unreadNotifications: [InboxNotification]
+    @Query(sort: \Meeting.date, order: .reverse)
+    private var meetings: [Meeting]
 
-    @Query(sort: \Meeting.date, order: .reverse) private var meetings: [Meeting]
     @Environment(AppSettings.self) private var settings
     @Environment(RecordingSession.self) private var session
-    @Environment(EventKitManager.self) private var eventKitManager
     @Environment(GoogleCalendarMonitor.self) private var googleCalendarMonitor
+    @Environment(\.modelContext) private var modelContext
 
     var selectedFolder: String?
     var onSelectEvent: ((GoogleCalendarClient.CalendarEvent) -> Void)?
@@ -22,77 +24,452 @@ struct HomeView: View {
     var onQuickNote: (() -> Void)?
     var onOpenActionItems: (() -> Void)?
 
-    @State private var hoveredEventID: String?
-    @State private var hoveredMeetingID: UUID?
-    @State private var meetingToDelete: Meeting?
-    @State private var showDeleteConfirmation = false
-    @State private var cachedGroupedPastMeetings: [(header: String, meetings: [Meeting])] = []
-    @State private var cachedGoogleEvents: [GoogleCalendarClient.CalendarEvent] = []
-    @State private var cachedAppleEvents: [EventKitManager.CalendarEvent] = []
-    @Environment(\.modelContext) private var modelContext
+    @State private var hoveredNudgeID: UUID?
+    @State private var editingNudgeID: UUID?
+    @State private var editDraft: String = ""
+    @State private var dispatchStatus: [UUID: String] = [:]  // "sending", "sent", "copied", "failed"
+
+    // MARK: - Derived Data
+
+    private var nextEvent: GoogleCalendarClient.CalendarEvent? {
+        googleCalendarMonitor.upcomingEvents
+            .filter { $0.end > .now }
+            .sorted { $0.start < $1.start }
+            .first
+    }
+
+    private var recentMeetingsCount: Int {
+        let calendar = Calendar.current
+        return meetings.filter { calendar.isDateInToday($0.date) && $0.status == .complete }.count
+    }
+
+    private var urgentActionItems: [ActionItem] {
+        openActionItems.filter { $0.isUrgent }.prefix(3).map { $0 }
+    }
+
+    // MARK: - Body
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // Active recording banner
+            VStack(alignment: .leading, spacing: 20) {
+                // Recording banner
                 if session.isRecording {
                     recordingBanner
                 }
 
-                // Upcoming meetings + Needs Attention (hidden during recording — banner takes priority)
-                if !session.isRecording {
-                    upcomingSection
-                        .padding(.horizontal, 24)
+                // Greeting + stats
+                greetingSection
+
+                // Next up card
+                if let event = nextEvent {
+                    nextUpCard(event)
                 }
 
-                Divider()
-                    .padding(.horizontal, 24)
+                // For You nudges
+                if !unreadNotifications.isEmpty {
+                    nudgesSection
+                }
 
-                // Past meetings
-                pastMeetingsSection
+                // Action items focus
+                if !openActionItems.isEmpty {
+                    actionItemsSection
+                }
+
+                // Quick actions
+                quickActionsRow
             }
-            .padding(.vertical, 24)
+            .padding(24)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .onAppear {
-            cachedGroupedPastMeetings = computeGroupedPastMeetings()
-            cachedGoogleEvents = computeUpcomingGoogleEvents()
-            cachedAppleEvents = computeUpcomingAppleEvents()
+        .navigationTitle("Home")
+    }
 
-            // Only fetch if cache is empty (avoids clearing events on tab switch)
-            if cachedGoogleEvents.isEmpty,
-               googleCalendarMonitor.isSignedIn,
-               settings.googleCalendarEnabled {
-                Task {
-                    await googleCalendarMonitor.fetchWeek(containing: .now)
+    // MARK: - Greeting
+
+    private var greetingSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(greeting)
+                .font(.largeTitle.bold())
+
+            HStack(spacing: 16) {
+                if recentMeetingsCount > 0 {
+                    Label("\(recentMeetingsCount) meetings today", systemImage: "calendar")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                if !openActionItems.isEmpty {
+                    Label("\(openActionItems.count) open items", systemImage: "checklist")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                }
+                if !unreadNotifications.isEmpty {
+                    Label("\(unreadNotifications.count) for you", systemImage: "sparkles")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.accentColor)
                 }
             }
         }
-        .onChange(of: googleCalendarMonitor.weekEvents) {
-            cachedGoogleEvents = computeUpcomingGoogleEvents()
+    }
+
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: .now)
+        let name = settings.displayName.components(separatedBy: " ").first ?? ""
+        let prefix = switch hour {
+        case 0..<12: "Good morning"
+        case 12..<17: "Good afternoon"
+        default: "Good evening"
         }
-        .onChange(of: eventKitManager.upcomingEvents) {
-            cachedAppleEvents = computeUpcomingAppleEvents()
-        }
-        .onChange(of: meetings) {
-            cachedGroupedPastMeetings = computeGroupedPastMeetings()
-        }
-        .onChange(of: selectedFolder) {
-            cachedGroupedPastMeetings = computeGroupedPastMeetings()
-        }
-        .alert("Delete Meeting?", isPresented: $showDeleteConfirmation) {
-            Button("Cancel", role: .cancel) { meetingToDelete = nil }
-            Button("Delete", role: .destructive) {
-                if let meeting = meetingToDelete {
-                    modelContext.delete(meeting)
-                    meetingToDelete = nil
+        return name.isEmpty ? prefix : "\(prefix), \(name)"
+    }
+
+    // MARK: - Next Up
+
+    private func nextUpCard(_ event: GoogleCalendarClient.CalendarEvent) -> some View {
+        let eventColor = Color.fromHex(event.colorHex) ?? .orange
+
+        return Button {
+            onSelectEvent?(event)
+        } label: {
+            HStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(eventColor)
+                    .frame(width: 4)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Next up")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+
+                    Text(event.title)
+                        .font(.headline)
+                        .lineLimit(1)
+
+                    HStack(spacing: 8) {
+                        Text(event.start, style: .relative)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        if !event.attendees.isEmpty {
+                            Text("\u{00B7} \(event.attendees.count) attendees")
+                                .font(.subheadline)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+                .padding(14)
+
+                Spacer()
+
+                if event.meetingLink != nil {
+                    Button("Join & Record", systemImage: "mic.fill") {
+                        onRecord?(event)
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
+                    .controlSize(.regular)
+                    .padding(.trailing, 14)
                 }
             }
-        } message: {
-            if let meeting = meetingToDelete {
-                Text("\"\(meeting.title.isEmpty ? "Untitled Meeting" : meeting.title)\" and all its data will be permanently deleted.")
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular.tint(eventColor.opacity(0.08)).interactive(), in: .rect(cornerRadius: 12))
+    }
+
+    // MARK: - Nudges
+
+    private var nudgesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("For You", systemImage: "sparkles")
+                    .font(.headline)
+                Spacer()
+            }
+
+            ForEach(unreadNotifications.prefix(5)) { notif in
+                dispatcherCard(notif)
             }
         }
+    }
+
+    private func dispatcherCard(_ notif: InboxNotification) -> some View {
+        let isHovered = hoveredNudgeID == notif.id
+        let isEditing = editingNudgeID == notif.id
+        let status = dispatchStatus[notif.id]
+
+        return VStack(alignment: .leading, spacing: 8) {
+            // Header: icon + title + edit/dismiss
+            HStack(spacing: 8) {
+                Image(systemName: notif.typeIcon)
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
+
+                Text(notif.title)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+
+                Spacer()
+
+                if isHovered {
+                    if notif.isDispatchable {
+                        Button("Edit", systemImage: "pencil") {
+                            editDraft = notif.draft ?? notif.body
+                            editingNudgeID = isEditing ? nil : notif.id
+                        }
+                        .labelStyle(.iconOnly)
+                        .font(.caption2)
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                    }
+
+                    Button("Dismiss", systemImage: "xmark") {
+                        withAnimation { notif.isRead = true }
+                    }
+                    .labelStyle(.iconOnly)
+                    .font(.caption2)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tertiary)
+                }
+            }
+
+            // Draft body (editable or static)
+            if isEditing {
+                TextField("Edit draft...", text: $editDraft, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .font(.caption)
+                    .lineLimit(3...6)
+                    .padding(8)
+                    .glassEffect(.regular, in: .rect(cornerRadius: 6))
+            } else if let draft = notif.draft {
+                Text(draft)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+                    .textSelection(.enabled)
+            } else {
+                Text(notif.body)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            // Recipient hint
+            if let recipient = notif.recipient {
+                HStack(spacing: 4) {
+                    Image(systemName: "person")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    Text(recipient)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
+            // Action buttons
+            if notif.isDispatchable || status != nil {
+                HStack(spacing: 8) {
+                    if let status {
+                        Label(
+                            status == "sent" ? "Sent" : status == "copied" ? "Copied" : status == "failed" ? "Failed" : "Sending...",
+                            systemImage: status == "sent" || status == "copied" ? "checkmark.circle.fill" : status == "failed" ? "xmark.circle" : "arrow.up.circle"
+                        )
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(status == "failed" ? .red : .green)
+                    } else {
+                        // Send via n8n
+                        if settings.n8nEnabled && !settings.n8nWebhookURL.isEmpty {
+                            Button {
+                                sendViaN8n(notif)
+                            } label: {
+                                Label(n8nButtonLabel(notif.channel), systemImage: "paperplane.fill")
+                                    .font(.caption.weight(.medium))
+                            }
+                            .buttonStyle(.glass)
+                            .controlSize(.small)
+                        }
+
+                        // Copy draft
+                        Button {
+                            copyDraft(notif)
+                        } label: {
+                            Label("Copy draft", systemImage: "doc.on.doc")
+                                .font(.caption.weight(.medium))
+                        }
+                        .buttonStyle(.glass)
+                        .controlSize(.small)
+                    }
+
+                    Spacer()
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .glassEffect(
+            .regular.tint(.orange.opacity(isHovered ? 0.06 : 0.02)).interactive(),
+            in: .rect(cornerRadius: 10)
+        )
+        .onHover { h in
+            withAnimation(.easeInOut(duration: 0.15)) { hoveredNudgeID = h ? notif.id : nil }
+        }
+    }
+
+    // MARK: - Dispatch Actions
+
+    private func sendViaN8n(_ notif: InboxNotification) {
+        let draftText = editingNudgeID == notif.id ? editDraft : (notif.draft ?? notif.body)
+        dispatchStatus[notif.id] = "sending"
+
+        Task {
+            let payload = N8nClient.DispatchPayload(
+                channel: notif.channel ?? "reminder",
+                recipient: notif.recipient,
+                draft: draftText,
+                ticketTitle: notif.ticketTitle,
+                meetingTitle: notif.sourceMeetingTitle,
+                actionItemTitle: notif.sourceActionItemTitle,
+                actionItemID: notif.id.uuidString
+            )
+
+            let success = await N8nClient.sendDispatch(
+                payload: payload,
+                webhookURL: settings.n8nWebhookURL,
+                authHeader: settings.n8nAuthHeader.isEmpty ? nil : settings.n8nAuthHeader
+            )
+
+            await MainActor.run {
+                withAnimation {
+                    dispatchStatus[notif.id] = success ? "sent" : "failed"
+                    if success {
+                        editingNudgeID = nil
+                        // Auto-dismiss after delay
+                        Task {
+                            try? await Task.sleep(for: .seconds(2))
+                            await MainActor.run {
+                                withAnimation { notif.isRead = true }
+                                dispatchStatus[notif.id] = nil
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func copyDraft(_ notif: InboxNotification) {
+        let text = editingNudgeID == notif.id ? editDraft : (notif.draft ?? notif.body)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+
+        withAnimation { dispatchStatus[notif.id] = "copied" }
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            await MainActor.run {
+                withAnimation { dispatchStatus[notif.id] = nil }
+            }
+        }
+    }
+
+    private func n8nButtonLabel(_ channel: String?) -> String {
+        switch channel {
+        case "slack": "Send to Slack"
+        case "email": "Send email"
+        case "ticket": "Create ticket"
+        default: "Send via n8n"
+        }
+    }
+
+    // MARK: - Action Items
+
+    private var actionItemsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("Action Items", systemImage: "checklist")
+                    .font(.headline)
+                Spacer()
+                Button {
+                    onOpenActionItems?()
+                } label: {
+                    Text("View all \(openActionItems.count)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if !urgentActionItems.isEmpty {
+                ForEach(urgentActionItems) { item in
+                    HStack(spacing: 10) {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.red)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.title)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                            if let assignee = item.assignee, !assignee.isEmpty {
+                                Text(assignee)
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .glassEffect(.regular.tint(.red.opacity(0.04)), in: .rect(cornerRadius: 8))
+                }
+            }
+
+            // Summary bar
+            Button {
+                onOpenActionItems?()
+            } label: {
+                HStack(spacing: 10) {
+                    Text("\(openActionItems.count) open")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.orange)
+                    Spacer()
+                    Text("Open dashboard")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+            }
+            .buttonStyle(.plain)
+            .glassEffect(.regular.tint(.orange.opacity(0.04)).interactive(), in: .rect(cornerRadius: 10))
+        }
+    }
+
+    // MARK: - Quick Actions
+
+    private var quickActionsRow: some View {
+        HStack(spacing: 10) {
+            Button {
+                onQuickNote?()
+            } label: {
+                Label("Quick Note", systemImage: "square.and.pencil")
+                    .font(.subheadline)
+            }
+            .buttonStyle(.glass)
+
+            if let event = nextEvent, event.meetingLink != nil {
+                Button {
+                    onRecord?(event)
+                } label: {
+                    Label("Join Next Meeting", systemImage: "video.fill")
+                        .font(.subheadline)
+                }
+                .buttonStyle(.glass)
+            }
+        }
+        .padding(.top, 8)
     }
 
     // MARK: - Recording Banner
@@ -115,540 +492,15 @@ struct HomeView: View {
             Spacer()
 
             if let meeting = session.currentMeeting {
-                Button {
-                    onSelectMeeting?(meeting)
-                } label: {
-                    Text("View")
-                        .font(.caption.bold())
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
-                .controlSize(.small)
+                Button("View") { onSelectMeeting?(meeting) }
+                    .font(.caption.bold())
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                    .controlSize(.small)
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .glassEffect(.regular.tint(.red.opacity(0.15)).interactive(), in: .rect(cornerRadius: 10))
-        .padding(.horizontal, 24)
-        .padding(.bottom, 16)
     }
-
-    // MARK: - Upcoming Section
-
-    private static let upcomingDayLabelFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE, MMM d"
-        return f
-    }()
-
-    private func computeUpcomingGoogleEvents() -> [GoogleCalendarClient.CalendarEvent] {
-        Array(
-            googleCalendarMonitor.weekEvents
-                .filter { $0.end > .now }
-                .sorted { $0.start < $1.start }
-                .prefix(5)
-        )
-    }
-
-    private func computeUpcomingAppleEvents() -> [EventKitManager.CalendarEvent] {
-        Array(
-            eventKitManager.upcomingEvents
-                .filter { $0.end > .now }
-                .sorted { $0.start < $1.start }
-                .prefix(5)
-        )
-    }
-
-    private var upcomingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Coming up")
-                .font(.title.bold())
-
-            if googleCalendarMonitor.isSignedIn && settings.googleCalendarEnabled {
-                googleUpcomingContent
-            } else if settings.calendarEnabled {
-                appleUpcomingContent
-            } else {
-                emptyUpcomingState
-            }
-        }
-        .padding(.bottom, 20)
-    }
-
-    // MARK: - Google Upcoming
-
-    @ViewBuilder
-    private var googleUpcomingContent: some View {
-        let upcoming = cachedGoogleEvents
-        if upcoming.isEmpty {
-            if googleCalendarMonitor.isLoading {
-                ProgressView()
-                    .controlSize(.small)
-            } else {
-                emptyUpcomingState
-            }
-        } else {
-            let dayBreaks = dayBreakIndices(dates: upcoming.map(\.start))
-            VStack(spacing: 8) {
-                ForEach(upcoming.enumerated(), id: \.element.id) { index, event in
-                    if dayBreaks.contains(index) {
-                        dayLabel(for: event.start)
-                    }
-                    googleEventCard(event)
-                }
-            }
-        }
-    }
-
-    // MARK: - Apple Upcoming
-
-    @ViewBuilder
-    private var appleUpcomingContent: some View {
-        let upcoming = cachedAppleEvents
-        if upcoming.isEmpty {
-            emptyUpcomingState
-        } else {
-            let dayBreaks = dayBreakIndices(dates: upcoming.map(\.start))
-            VStack(spacing: 8) {
-                ForEach(upcoming.enumerated(), id: \.element.id) { index, event in
-                    if dayBreaks.contains(index) {
-                        dayLabel(for: event.start)
-                    }
-                    appleEventCard(event)
-                }
-            }
-        }
-    }
-
-    /// Returns indices where the day changes (always includes index 0).
-    private func dayBreakIndices(dates: [Date]) -> Set<Int> {
-        let calendar = Calendar.current
-        var result: Set<Int> = []
-        var lastDay: Date?
-        for (i, date) in dates.enumerated() {
-            let day = calendar.startOfDay(for: date)
-            if day != lastDay {
-                result.insert(i)
-                lastDay = day
-            }
-        }
-        return result
-    }
-
-    private func dayLabel(for day: Date) -> some View {
-        let calendar = Calendar.current
-        let label: String
-        if calendar.isDateInToday(day) {
-            label = "Today"
-        } else if calendar.isDateInTomorrow(day) {
-            label = "Tomorrow"
-        } else {
-            label = Self.upcomingDayLabelFormatter.string(from: day)
-        }
-        return Text(label)
-            .font(.caption.bold())
-            .foregroundStyle(.secondary)
-            .textCase(.uppercase)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 4)
-    }
-
-    private var emptyUpcomingState: some View {
-        VStack(spacing: 12) {
-            if !settings.calendarEnabled && !settings.googleCalendarEnabled {
-                Text("Connect a calendar to see upcoming meetings")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                Button {
-                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                } label: {
-                    Label("Open Settings", systemImage: "gearshape")
-                        .font(.subheadline)
-                }
-                .buttonStyle(.glass)
-                .controlSize(.small)
-            } else {
-                Text("No meetings coming up")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Button {
-                onQuickNote?()
-            } label: {
-                Label("Record a quick note", systemImage: "square.and.pencil")
-                    .font(.subheadline)
-            }
-            .buttonStyle(.glass)
-            .controlSize(.small)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-    }
-
-    // MARK: - Google Event Card
-
-    @ViewBuilder
-    private func googleEventCard(_ event: GoogleCalendarClient.CalendarEvent) -> some View {
-        let isHovered = hoveredEventID == event.id
-        let isLive = event.start <= .now && event.end > .now
-
-        Button {
-            onSelectEvent?(event)
-        } label: {
-            HStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.fromHex(event.colorHex) ?? .orange)
-                    .frame(width: 4)
-
-                HStack(spacing: 10) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
-                            Text(event.title)
-                                .font(.subheadline.bold())
-                                .lineLimit(1)
-
-                            if isLive {
-                                liveBadge
-                            }
-                        }
-
-                        HStack(spacing: 6) {
-                            Text(timeRangeLabel(start: event.start, end: event.end))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-
-                            if !event.attendees.isEmpty {
-                                Text("\u{00B7}")
-                                    .foregroundStyle(.tertiary)
-                                    .font(.caption)
-                                attendeeAvatars(event.attendees)
-                            }
-                        }
-                    }
-
-                    Spacer()
-
-                    if isHovered || isLive {
-                        Button {
-                            onRecord?(event)
-                        } label: {
-                            Label("Start now", systemImage: "mic.fill")
-                                .font(.caption.bold())
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.green)
-                        .controlSize(.small)
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-            }
-            .contentShape(Rectangle())
-            .glassEffect(.regular.tint((Color.fromHex(event.colorHex) ?? .orange).opacity(0.1)).interactive(), in: .rect(cornerRadius: 10))
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
-                hoveredEventID = hovering ? event.id : nil
-            }
-        }
-    }
-
-    // MARK: - Apple Event Card
-
-    @ViewBuilder
-    private func appleEventCard(_ event: EventKitManager.CalendarEvent) -> some View {
-        let isHovered = hoveredEventID == event.id
-        let isLive = event.start <= .now && event.end > .now
-
-        Button {
-            onRecordAppleEvent?(event)
-        } label: {
-        HStack(spacing: 0) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(.blue)
-                .frame(width: 4)
-
-            HStack(spacing: 10) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 6) {
-                        Text(event.title)
-                            .font(.subheadline.bold())
-                            .lineLimit(1)
-
-                        if isLive {
-                            liveBadge
-                        }
-                    }
-
-                    HStack(spacing: 6) {
-                        Text(timeRangeLabel(start: event.start, end: event.end))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        if !event.attendees.isEmpty {
-                            Text("\u{00B7}")
-                                .foregroundStyle(.tertiary)
-                                .font(.caption)
-                            attendeeAvatars(event.attendees)
-                        }
-                    }
-                }
-
-                Spacer()
-
-                if isHovered || isLive {
-                    Button {
-                        onRecordAppleEvent?(event)
-                    } label: {
-                        Label("Start now", systemImage: "mic.fill")
-                            .font(.caption.bold())
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.green)
-                    .controlSize(.small)
-                    .transition(.scale.combined(with: .opacity))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-        }
-        .contentShape(Rectangle())
-        .glassEffect(.regular.tint(Color.blue.opacity(0.1)).interactive(), in: .rect(cornerRadius: 10))
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
-                hoveredEventID = hovering ? event.id : nil
-            }
-        }
-    }
-
-    // MARK: - Live Badge
-
-    private var liveBadge: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(.green)
-                .frame(width: 6, height: 6)
-            Text("Live")
-                .font(.caption2.bold())
-        }
-        .foregroundStyle(.green)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 2)
-        .glassEffect(.regular.tint(.green), in: .capsule)
-    }
-
-    // MARK: - Past Meetings Section
-
-    private var pastMeetingsSection: some View {
-        LazyVStack(alignment: .leading, spacing: 12) {
-            Text("Past Meetings")
-                .font(.title2.bold())
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
-
-            if cachedGroupedPastMeetings.isEmpty {
-                Text("No meetings yet")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 24)
-            } else {
-                ForEach(cachedGroupedPastMeetings, id: \.header) { section in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(section.header)
-                            .font(.caption.bold())
-                            .foregroundStyle(.secondary)
-                            .textCase(.uppercase)
-                            .padding(.horizontal, 24)
-                            .padding(.top, 8)
-
-                        ForEach(section.meetings) { meeting in
-                            pastMeetingRow(meeting)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private func computeGroupedPastMeetings() -> [(header: String, meetings: [Meeting])] {
-        let completed = meetings.filter { meeting in
-            meeting.status != .recording
-                && (selectedFolder == nil || meeting.folder == selectedFolder)
-        }
-
-        let calendar = Calendar.current
-        var groups: [(header: String, meetings: [Meeting])] = []
-        var buckets: [String: [Meeting]] = [:]
-        var order: [String] = []
-
-        for meeting in completed {
-            let header: String
-            if calendar.isDateInToday(meeting.date) {
-                header = "Today"
-            } else if calendar.isDateInYesterday(meeting.date) {
-                header = "Yesterday"
-            } else {
-                header = Self.dateHeaderFormatter.string(from: meeting.date)
-            }
-
-            if buckets[header] == nil {
-                order.append(header)
-            }
-            buckets[header, default: []].append(meeting)
-        }
-
-        for key in order {
-            if let items = buckets[key] {
-                groups.append((header: key, meetings: items))
-            }
-        }
-        return groups
-    }
-
-    @ViewBuilder
-    private func pastMeetingRow(_ meeting: Meeting) -> some View {
-        Button {
-            onSelectMeeting?(meeting)
-        } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(meeting.title.isEmpty ? "Untitled Meeting" : meeting.title)
-                        .font(.subheadline.bold())
-                        .lineLimit(1)
-
-                    HStack(spacing: 8) {
-                        Text(meeting.date, style: .time)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        if meeting.duration > 0 {
-                            Text(durationLabel(meeting.duration))
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .glassEffect(.regular, in: .capsule)
-                        }
-
-                        if let attendees = meeting.calendarAttendees, attendees.count > 1, meeting.duration > 0 {
-                            let hours = Int(ceil(meeting.duration / 3600))
-                            let personHours = hours * attendees.count
-                            Text("\(personHours) person-hrs")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        let openItems = meeting.actionItems.filter { !$0.isCompleted }.count
-                        if openItems > 0 {
-                            Label("\(openItems)", systemImage: "checklist")
-                                .font(.caption2)
-                                .foregroundStyle(.orange)
-                        }
-                    }
-
-                    if let snippet = summarySnippet(for: meeting) {
-                        Text(snippet)
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                            .lineLimit(1)
-                    }
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 8)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .background {
-            if hoveredMeetingID == meeting.id {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(.clear)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 8))
-            }
-        }
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
-                hoveredMeetingID = hovering ? meeting.id : nil
-            }
-        }
-        .contextMenu {
-            Button("Delete Meeting", role: .destructive) {
-                meetingToDelete = meeting
-                showDeleteConfirmation = true
-            }
-        }
-    }
-
-    // MARK: - Attendee Avatars
-
-    @ViewBuilder
-    private func attendeeAvatars(_ attendees: [String]) -> some View {
-        let visible = attendees.prefix(3)
-        let overflow = attendees.count - visible.count
-
-        HStack(spacing: -4) {
-            ForEach(visible.enumerated(), id: \.offset) { _, name in
-                AvatarView(name: name, size: 20)
-            }
-            if overflow > 0 {
-                Text("+\(overflow)")
-                    .font(.system(size: 8, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 20, height: 20)
-                    .background(.quaternary, in: Circle())
-            }
-        }
-    }
-
-    // MARK: - Helpers
-
-    private static let timeRangeStartFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm"
-        return f
-    }()
-
-    private static let timeRangeEndFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f
-    }()
-
-    private func timeRangeLabel(start: Date, end: Date) -> String {
-        "\(Self.timeRangeStartFormatter.string(from: start)) \u{2013} \(Self.timeRangeEndFormatter.string(from: end))"
-    }
-
-    private func durationLabel(_ duration: TimeInterval) -> String {
-        let minutes = Int(duration) / 60
-        if minutes < 60 {
-            return "\(minutes)m"
-        }
-        let hours = minutes / 60
-        let remaining = minutes % 60
-        return remaining > 0 ? "\(hours)h \(remaining)m" : "\(hours)h"
-    }
-
-    private func summarySnippet(for meeting: Meeting) -> String? {
-        if !meeting.summary.isEmpty {
-            return String(meeting.summary.prefix(100))
-        }
-        if !meeting.notes.isEmpty {
-            return String(meeting.notes.prefix(100))
-        }
-        return nil
-    }
-
 }

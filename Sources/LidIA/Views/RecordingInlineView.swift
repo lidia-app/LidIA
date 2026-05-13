@@ -19,6 +19,20 @@ struct RecordingInlineView: View {
                 .frame(height: 60)
                 .padding(.horizontal, 20)
 
+            // Mic-only warning
+            if session.activeCaptureMode == .micOnly {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text("Mic Only — others won't be transcribed separately")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+            }
+
             // Word count
             Text("\(session.transcriptWords.count) words captured")
                 .font(.caption)

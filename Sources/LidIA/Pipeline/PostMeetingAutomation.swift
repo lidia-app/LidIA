@@ -230,12 +230,34 @@ struct PostMeetingAutomation {
         // Send completion notification
         sendCompletionNotification(meeting: meeting)
 
+        // Create InboxNotification for processed meeting
+        let processedNotif = InboxNotification(
+            type: "processed",
+            title: "Meeting processed",
+            body: "\(meeting.title) — \(meeting.actionItems.count) action item\(meeting.actionItems.count == 1 ? "" : "s")",
+            meetingID: meeting.id
+        )
+        modelContext.insert(processedNotif)
+
+        // Create inbox reminders for action items with due dates
+        for item in meeting.actionItems where item.deadlineDate != nil {
+            let reminder = InboxNotification(
+                type: "reminder",
+                title: "Action item due",
+                body: item.title,
+                meetingID: meeting.id
+            )
+            modelContext.insert(reminder)
+        }
+        try? modelContext.save()
+
         // Proactive post-meeting nudges
         if !meeting.actionItems.isEmpty {
             await generatePostMeetingNudges(
                 meeting: meeting,
                 settings: settings,
-                modelManager: modelManager
+                modelManager: modelManager,
+                modelContext: modelContext
             )
         }
     }
@@ -262,7 +284,8 @@ struct PostMeetingAutomation {
     private static func generatePostMeetingNudges(
         meeting: Meeting,
         settings: AppSettings,
-        modelManager: ModelManager?
+        modelManager: ModelManager?,
+        modelContext: ModelContext
     ) async {
         let displayName = settings.displayName.lowercased()
 
@@ -291,62 +314,139 @@ struct PostMeetingAutomation {
             }
         }
 
-        var nudgeCount = 0
-        let maxNudges = 3
+        let attendees = meeting.calendarAttendees ?? []
+        let attendeesString = attendees.joined(separator: ", ")
 
-        // Follow-up nudges with LLM-drafted messages
-        for item in followUps.prefix(2) where nudgeCount < maxNudges {
-            var draft = ""
+        var nudgeCount = 0
+        let maxNudges = 5
+
+        // Collect all items in priority order: follow-ups, tickets, reminders
+        let prioritizedItems: [(item: ActionItem, category: String)] =
+            followUps.map { ($0, "follow_up") } +
+            tickets.map { ($0, "ticket") } +
+            reminders.map { ($0, "reminder") }
+
+        for (item, category) in prioritizedItems.prefix(maxNudges) {
+            // Call LLM to generate a rich draft with channel routing
+            var parsedDraft: String?
+            var parsedRecipient: String?
+            var parsedChannel: String?
+            var parsedTicketTitle: String?
+
             do {
                 let client = makeLLMClient(settings: settings, modelManager: modelManager, taskType: .chat)
                 let model = effectiveModel(for: .query, settings: settings, taskType: .chat)
-                draft = try await client.chat(
+                let prompt = """
+                Given this action item from a meeting, generate a follow-up action.
+                Action item: "\(item.title)"
+                Meeting: "\(meeting.title)"
+                Attendees: \(attendeesString)
+
+                Return ONLY a JSON object (no markdown, no code fences):
+                {"draft": "1-2 sentence professional message", "recipient": "best-guess name from attendees or null", "channel": "slack or email or ticket or reminder", "ticketTitle": "short ticket title if channel is ticket, else null"}
+                """
+
+                let response = try await client.chat(
                     messages: [
-                        .init(role: "system", content: "Write a very short (1-2 sentence) professional message for this follow-up. No greeting, no sign-off, just the content. Be direct."),
-                        .init(role: "user", content: "Action item: \(item.title)\nMeeting context: \(meeting.title)"),
+                        .init(role: "user", content: prompt),
                     ],
                     model: model,
                     format: nil
                 )
+
+                // Parse JSON from LLM response — strip markdown fences if present
+                var jsonString = response.trimmingCharacters(in: .whitespacesAndNewlines)
+                if jsonString.hasPrefix("```") {
+                    // Remove opening fence (```json or ```)
+                    if let firstNewline = jsonString.firstIndex(of: "\n") {
+                        jsonString = String(jsonString[jsonString.index(after: firstNewline)...])
+                    }
+                    // Remove closing fence
+                    if jsonString.hasSuffix("```") {
+                        jsonString = String(jsonString.dropLast(3)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                }
+
+                if let data = jsonString.data(using: .utf8),
+                   let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    parsedDraft = parsed["draft"] as? String
+                    parsedRecipient = parsed["recipient"] as? String
+                    parsedChannel = parsed["channel"] as? String
+                    parsedTicketTitle = parsed["ticketTitle"] as? String
+                }
             } catch {
                 logger.warning("Failed to draft nudge message: \(error.localizedDescription)")
-                draft = ""
             }
 
-            let body = draft.isEmpty
-                ? "You agreed to: \(item.title)"
-                : "You agreed to: \(item.title)\n\nDraft: \"\(draft.trimmingCharacters(in: .whitespacesAndNewlines))\""
+            // Fallback: if LLM parsing failed, set channel based on keyword categorization
+            if parsedChannel == nil {
+                switch category {
+                case "follow_up": parsedChannel = "slack"
+                case "ticket": parsedChannel = "ticket"
+                default: parsedChannel = "reminder"
+                }
+            }
+            if parsedDraft == nil {
+                parsedDraft = item.title
+            }
 
+            // Determine notification type and title
+            let notifType: String
+            let notifTitle: String
+            switch category {
+            case "follow_up":
+                notifType = "follow_up"
+                notifTitle = "Follow-up from \(meeting.title)"
+            case "ticket":
+                notifType = "ticket"
+                notifTitle = "Create ticket?"
+            default:
+                notifType = "reminder"
+                notifTitle = "Action item from \(meeting.title)"
+            }
+
+            // Create rich InboxNotification with actionPayload
+            let payload = InboxNotification.encodePayload(
+                draft: parsedDraft,
+                recipient: parsedRecipient,
+                channel: parsedChannel,
+                ticketTitle: parsedTicketTitle,
+                meetingTitle: meeting.title,
+                actionItemTitle: item.title
+            )
+
+            let notif = InboxNotification(
+                type: notifType,
+                title: notifTitle,
+                body: parsedDraft ?? item.title,
+                meetingID: meeting.id,
+                actionPayload: payload
+            )
+            modelContext.insert(notif)
+
+            // Also send system notification as secondary surface
+            let systemBody: String
+            switch category {
+            case "follow_up":
+                let draftText = parsedDraft ?? item.title
+                systemBody = "You agreed to: \(item.title)\n\nDraft: \"\(draftText)\""
+            case "ticket":
+                let dest = item.suggestedDestination ?? "your task tracker"
+                systemBody = "From \(meeting.title): \"\(item.title)\" — should this be a \(dest) ticket?"
+            default:
+                systemBody = item.title
+            }
             sendNudgeNotification(
-                title: "Follow-up from \(meeting.title)",
-                body: body,
+                title: notifTitle,
+                body: systemBody,
                 identifier: "lidia.nudge.\(item.id)"
             )
-            nudgeCount += 1
-        }
 
-        // Ticket nudges
-        for item in tickets.prefix(1) where nudgeCount < maxNudges {
-            let dest = item.suggestedDestination ?? "your task tracker"
-            sendNudgeNotification(
-                title: "Create ticket?",
-                body: "From \(meeting.title): \"\(item.title)\" — should this be a \(dest) ticket?",
-                identifier: "lidia.nudge.\(item.id)"
-            )
-            nudgeCount += 1
-        }
-
-        // Remaining reminder nudges (fill up to maxNudges)
-        for item in reminders where nudgeCount < maxNudges {
-            sendNudgeNotification(
-                title: "Action item from \(meeting.title)",
-                body: item.title,
-                identifier: "lidia.nudge.\(item.id)"
-            )
             nudgeCount += 1
         }
 
         if nudgeCount > 0 {
+            try? modelContext.save()
             logger.info("Scheduled \(nudgeCount) post-meeting nudge(s) for \(meeting.title)")
         }
     }

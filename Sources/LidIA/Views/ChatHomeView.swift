@@ -15,51 +15,65 @@ struct ChatHomeView: View {
     @Binding var path: NavigationPath
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-                Text("Ask anything")
-                    .font(.largeTitle.bold())
+        ScrollView {
+            VStack(spacing: 0) {
+                // Centered hero section
+                VStack(spacing: 16) {
+                    Spacer()
+                        .frame(height: 40)
 
-                composer
+                    Image(systemName: "bubble.left.and.text.bubble.right")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.quaternary)
 
+                    Text("How can I help you today?")
+                        .font(.largeTitle.bold())
+
+                    composer
+                        .frame(maxWidth: 640)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 32)
+
+                // Recent chats section
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Recent Chats")
                         .font(.headline)
+                        .padding(.horizontal, 24)
 
                     if viewModel.recentThreads.isEmpty {
-                        ContentUnavailableView(
-                            "No chats yet",
-                            systemImage: "bubble.left.and.bubble.right",
-                            description: Text("Start a conversation above to create your first thread.")
-                        )
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        Text("No chats yet")
+                            .font(.subheadline)
+                            .foregroundStyle(.tertiary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 40)
                     } else {
-                        ScrollView {
-                            LazyVStack(spacing: 0) {
-                                ForEach(viewModel.recentThreads) { thread in
-                                    Button {
-                                        viewModel.openThread(thread)
-                                        path.append(thread.id)
-                                    } label: {
-                                        threadRow(thread)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .contextMenu {
-                                        Button("Delete Chat", role: .destructive) {
-                                            viewModel.deleteThread(thread)
-                                        }
-                                    }
-
-                                    Divider()
-                                        .padding(.leading, 4)
+                        LazyVStack(spacing: 0) {
+                            ForEach(viewModel.recentThreads) { thread in
+                                Button {
+                                    viewModel.openThread(thread)
+                                    path.append(thread.id)
+                                } label: {
+                                    threadRow(thread)
                                 }
+                                .buttonStyle(.plain)
+                                .contextMenu {
+                                    Button("Delete Chat", role: .destructive) {
+                                        viewModel.deleteThread(thread)
+                                    }
+                                }
+
+                                Divider()
+                                    .padding(.horizontal, 24)
                             }
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(24)
-            .navigationTitle("Chat")
+        }
+        .navigationTitle("Chat")
             .toolbar {
                 ToolbarItem(placement: .automatic) {
                     Button {
@@ -72,6 +86,12 @@ struct ChatHomeView: View {
             }
             .onAppear {
                 if let threadID = navigateToThreadID {
+                    viewModel.openThread(id: threadID)
+                    path.append(threadID)
+                }
+            }
+            .onChange(of: navigateToThreadID) { _, threadID in
+                if let threadID {
                     viewModel.openThread(id: threadID)
                     path.append(threadID)
                 }
@@ -165,7 +185,8 @@ struct ChatHomeView: View {
                     .lineLimit(1)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 24)
         .background {
             if hoveredThreadID == thread.id {
                 RoundedRectangle(cornerRadius: 8)

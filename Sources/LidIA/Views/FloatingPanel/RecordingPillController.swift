@@ -126,6 +126,13 @@ private struct RecordingPillView: View {
 
             qualityBadge
 
+            if session.activeCaptureMode == .micOnly {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .help("Mic only — others won't be transcribed separately")
+            }
+
             Divider()
                 .frame(width: 20)
 

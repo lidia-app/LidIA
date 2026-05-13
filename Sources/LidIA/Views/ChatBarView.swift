@@ -9,13 +9,13 @@ struct ChatBarView: View {
     var onClose: (() -> Void)?
     @Binding var isExpanded: Bool
 
-    /// Toggles the floating chat popup.
-    var onTogglePopup: (() -> Void)?
-    /// Whether the popup is currently visible (drives chevron direction).
-    var isPopupVisible: Bool = false
+    /// Expands chat into the fullscreen workspace.
+    var onExpandFullscreen: (() -> Void)?
 
     /// External trigger to focus the input field (toggled by Cmd+K).
     var focusTrigger: Binding<Bool>?
+
+    @State private var showRecipeMenu = false
 
     private var hasInput: Bool {
         !viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -24,27 +24,65 @@ struct ChatBarView: View {
     var body: some View {
         GlassEffectContainer(spacing: 20) {
             HStack(spacing: 10) {
-                // Toggle popup
-                barPill(icon: isPopupVisible ? "chevron.down" : "chevron.up") {
-                    withAnimation(.easeInOut(duration: 0.2)) { onTogglePopup?() }
+                // Expand to fullscreen workspace
+                barPill(icon: "arrow.up.left.and.arrow.down.right") {
+                    onExpandFullscreen?()
                 }
-                .help(isPopupVisible ? "Close chat" : "Open chat")
+                .help("Open chat workspace")
 
                 // Input field
-                TextField("Ask about meetings...", text: $viewModel.inputText)
+                TextField("Ask about meetings…", text: $viewModel.inputText)
                     .textFieldStyle(.plain)
                     .font(.subheadline)
                     .focused($inputFocused)
                     .onSubmit {
                         viewModel.send()
-                        if !isPopupVisible { onTogglePopup?() }
+                        onExpandFullscreen?()
+                    }
+                    .onChange(of: viewModel.inputText) { _, newValue in
+                        if newValue == "/" {
+                            showRecipeMenu = true
+                        }
+                    }
+                    .popover(isPresented: $showRecipeMenu, arrowEdge: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Insert recipe prompt — review and edit before sending.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 8)
+                                .padding(.bottom, 4)
+                            ForEach(Recipe.builtIn) { recipe in
+                                Button {
+                                    viewModel.inputText = recipe.prompt
+                                    showRecipeMenu = false
+                                    inputFocused = true
+                                } label: {
+                                    HStack {
+                                        Text(recipe.emoji)
+                                        VStack(alignment: .leading, spacing: 1) {
+                                            Text(recipe.name)
+                                                .font(.subheadline)
+                                            Text(recipe.description)
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(8)
+                        .frame(width: 320)
                     }
                     .frame(maxWidth: .infinity)
 
                 // Send button
                 ChatSendButton(isActive: hasInput) {
                     viewModel.send()
-                    if !isPopupVisible { onTogglePopup?() }
+                    onExpandFullscreen?()
                 }
                 .disabled(!hasInput || viewModel.isStreaming)
 

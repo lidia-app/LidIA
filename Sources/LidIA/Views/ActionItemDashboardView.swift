@@ -8,13 +8,13 @@ struct ActionItemDashboardView: View {
     @Query(sort: \Meeting.date, order: .reverse) private var meetings: [Meeting]
     @Binding var selectedMeeting: Meeting?
 
-    @State private var showCompleted = false
-    @State private var showMyItemsOnly = true
+    @AppStorage("actionItems.showCompleted") private var showCompleted = false
+    @AppStorage("actionItems.showMyItemsOnly") private var showMyItemsOnly = true
+    @AppStorage("actionItems.priorityFilter") private var priorityFilter = "all"
     @State private var filterText = ""
     @State private var isSyncingToNotion = false
     @State private var alertTitle: String = "Action Items"
     @State private var alertMessage: String?
-    @State private var priorityFilter = "all"
     @State private var hoveredItemID: UUID?
     @State private var cachedActionItems: [(ActionItem, Meeting)] = []
     @State private var isDispatching = false
@@ -51,32 +51,79 @@ struct ActionItemDashboardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Picker("Scope", selection: $showMyItemsOnly) {
-                    Text("My Items").tag(true)
-                    Text("All").tag(false)
+            HStack(spacing: 8) {
+                Button {
+                    showMyItemsOnly.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: showMyItemsOnly ? "person.fill" : "person.2")
+                            .font(.caption)
+                        Text(showMyItemsOnly ? "My Items" : "Everyone")
+                            .font(.caption)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 160)
+                .buttonStyle(.plain)
+                .glassEffect(showMyItemsOnly ? .regular.tint(.accentColor.opacity(0.3)) : .regular, in: .capsule)
 
-                TextField("Filter...", text: $filterText)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(maxWidth: 220)
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.tertiary)
+                        .font(.caption)
+                    TextField("Filter...", text: $filterText)
+                        .textFieldStyle(.plain)
+                        .font(.subheadline)
+                    if !filterText.isEmpty {
+                        Button { filterText = "" } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.tertiary)
+                                .font(.caption)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .glassEffect(.regular, in: .capsule)
+                .frame(maxWidth: 200)
 
-                Toggle("Show completed", isOn: $showCompleted)
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
+                Button {
+                    showCompleted.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: showCompleted ? "eye" : "eye.slash")
+                            .font(.caption)
+                        Text(showCompleted ? "Hiding done" : "Show done")
+                            .font(.caption)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(showCompleted ? .regular.tint(.green.opacity(0.3)) : .regular, in: .capsule)
 
-                Picker("Priority", selection: $priorityFilter) {
-                    Text("All").tag("all")
-                    Text("Urgent+").tag("urgent")
+                Menu {
+                    Button("All") { priorityFilter = "all" }
+                    Button("Urgent+") { priorityFilter = "urgent" }
                     Divider()
-                    Text("Critical").tag("critical")
-                    Text("High").tag("high")
-                    Text("Medium").tag("medium")
-                    Text("Low").tag("low")
+                    Button("Critical") { priorityFilter = "critical" }
+                    Button("High") { priorityFilter = "high" }
+                    Button("Medium") { priorityFilter = "medium" }
+                    Button("Low") { priorityFilter = "low" }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .font(.caption)
+                        Text(priorityFilter == "all" ? "Priority" : priorityFilter.capitalized)
+                            .font(.caption)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
                 }
-                .frame(width: 110)
+                .menuStyle(.borderlessButton)
+                .glassEffect(priorityFilter != "all" ? .regular.tint(.orange.opacity(0.3)) : .regular, in: .capsule)
+                .fixedSize()
 
                 Spacer()
 
@@ -112,11 +159,13 @@ struct ActionItemDashboardView: View {
                             deleteActionItem(item, from: meeting)
                         }
                     )
+                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
+                    .listRowSeparator(.hidden)
                     .background {
                         if hoveredItemID == item.id {
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: 6)
                                 .fill(.clear)
-                                .glassEffect(.regular, in: .rect(cornerRadius: 8))
+                                .glassEffect(.regular, in: .rect(cornerRadius: 6))
                         }
                     }
                     .onHover { hovering in

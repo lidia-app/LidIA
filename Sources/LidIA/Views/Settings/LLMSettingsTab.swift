@@ -201,41 +201,42 @@ struct LLMSettingsTab: View {
                         }
                     }
             case .openai:
-                if settings.openaiAPIKey.isEmpty {
-                    Text("Enter your OpenAI API key in the API Keys section below.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                apiKeyRow(label: "OpenAI API Key", key: $settings.openaiAPIKey, status: $openaiKeyStatus) {
+                    await testOpenAIKey()
                 }
+                TextField("Base URL", text: $settings.openaiBaseURL)
+                Text("Default: https://api.openai.com \u{2014} change for compatible endpoints.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             case .anthropic:
-                if settings.anthropicAPIKey.isEmpty {
-                    Text("Enter your Anthropic API key in the API Keys section below.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                apiKeyRow(label: "Anthropic API Key", key: $settings.anthropicAPIKey, status: $anthropicKeyStatus) {
+                    await testAnthropicKey()
                 }
             case .cerebras:
-                if settings.cerebrasAPIKey.isEmpty {
-                    Text("Enter your Cerebras API key in the API Keys section below. Free tier: 1M tokens/day.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                apiKeyRow(label: "Cerebras API Key", key: $settings.cerebrasAPIKey, status: $cerebrasKeyStatus) {
+                    await testCerebrasKey()
                 }
+                Text("Free tier: 1M tokens/day.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             case .deepseek:
-                if settings.deepseekAPIKey.isEmpty {
-                    Text("Enter your DeepSeek API key in the API Keys section below.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                apiKeyRow(label: "DeepSeek API Key", key: $settings.deepseekAPIKey, status: $deepseekKeyStatus) {
+                    await testDeepSeekKey()
                 }
             case .nvidiaNIM:
-                if settings.nvidiaAPIKey.isEmpty {
-                    Text("Enter your NVIDIA API key (starts with nvapi-*) in the API Keys section below. Access Kimi K2.5, Llama, Mistral and more through one key.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                apiKeyRow(label: "NVIDIA API Key", key: $settings.nvidiaAPIKey, status: $nvidiaKeyStatus) {
+                    await testNVIDIAKey()
                 }
+                Text("Key starts with nvapi-*. Access Kimi K2.5, Llama, Mistral and more through one key.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             case .openRouter:
-                if settings.openRouterAPIKey.isEmpty {
-                    Text("Enter your OpenRouter API key in the API Keys section below. OpenRouter provides access to hundreds of models through a single API key. Free tier available.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                apiKeyRow(label: "OpenRouter API Key", key: $settings.openRouterAPIKey, status: $openRouterKeyStatus) {
+                    await testOpenRouterKey()
                 }
+                Text("Access to hundreds of models through one key. Free tier available.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             if settings.llmProvider != .mlx {
@@ -310,46 +311,43 @@ struct LLMSettingsTab: View {
             }
         }
 
-        // API Keys
-        Section("API Keys") {
-            Text("API keys are stored securely in your macOS Keychain.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            apiKeyRow(label: "OpenAI API Key", key: $settings.openaiAPIKey, status: $openaiKeyStatus) {
-                await testOpenAIKey()
-            }
-            if settings.llmProvider == .openai {
-                TextField("OpenAI Base URL", text: $settings.openaiBaseURL)
-                Text("Default: https://api.openai.com \u{2014} change for compatible endpoints")
+        // Other API keys (for routing/fallback to non-default providers)
+        Section {
+            DisclosureGroup("Other API keys (routing & fallback)") {
+                Text("API keys are stored securely in your macOS Keychain. Keys here are used when a routing rule or fallback targets a provider other than your default.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            }
 
-            apiKeyRow(label: "Anthropic API Key", key: $settings.anthropicAPIKey, status: $anthropicKeyStatus) {
-                await testAnthropicKey()
-            }
-
-            apiKeyRow(label: "Cerebras API Key", key: $settings.cerebrasAPIKey, status: $cerebrasKeyStatus) {
-                await testCerebrasKey()
-            }
-
-            apiKeyRow(label: "DeepSeek API Key", key: $settings.deepseekAPIKey, status: $deepseekKeyStatus) {
-                await testDeepSeekKey()
-            }
-
-            apiKeyRow(label: "NVIDIA API Key", key: $settings.nvidiaAPIKey, status: $nvidiaKeyStatus) {
-                await testNVIDIAKey()
-            }
-
-            apiKeyRow(label: "OpenRouter API Key", key: $settings.openRouterAPIKey, status: $openRouterKeyStatus) {
-                await testOpenRouterKey()
-            }
-
-            if settings.openaiAPIKey.isEmpty && settings.anthropicAPIKey.isEmpty && settings.cerebrasAPIKey.isEmpty && settings.deepseekAPIKey.isEmpty && settings.nvidiaAPIKey.isEmpty && settings.openRouterAPIKey.isEmpty && settings.llmProvider != .mlx && settings.llmProvider != .ollama {
-                Text("Add at least one API key, or use MLX (local, free) as your LLM provider.")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+                if settings.llmProvider != .openai {
+                    apiKeyRow(label: "OpenAI API Key", key: $settings.openaiAPIKey, status: $openaiKeyStatus) {
+                        await testOpenAIKey()
+                    }
+                }
+                if settings.llmProvider != .anthropic {
+                    apiKeyRow(label: "Anthropic API Key", key: $settings.anthropicAPIKey, status: $anthropicKeyStatus) {
+                        await testAnthropicKey()
+                    }
+                }
+                if settings.llmProvider != .cerebras {
+                    apiKeyRow(label: "Cerebras API Key", key: $settings.cerebrasAPIKey, status: $cerebrasKeyStatus) {
+                        await testCerebrasKey()
+                    }
+                }
+                if settings.llmProvider != .deepseek {
+                    apiKeyRow(label: "DeepSeek API Key", key: $settings.deepseekAPIKey, status: $deepseekKeyStatus) {
+                        await testDeepSeekKey()
+                    }
+                }
+                if settings.llmProvider != .nvidiaNIM {
+                    apiKeyRow(label: "NVIDIA API Key", key: $settings.nvidiaAPIKey, status: $nvidiaKeyStatus) {
+                        await testNVIDIAKey()
+                    }
+                }
+                if settings.llmProvider != .openRouter {
+                    apiKeyRow(label: "OpenRouter API Key", key: $settings.openRouterAPIKey, status: $openRouterKeyStatus) {
+                        await testOpenRouterKey()
+                    }
+                }
             }
         }
     }

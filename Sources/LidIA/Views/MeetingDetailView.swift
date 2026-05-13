@@ -8,6 +8,7 @@ struct MeetingDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(EventKitManager.self) private var eventKitManager
     @Environment(ModelManager.self) private var modelManager
+    @Environment(RecordingSession.self) private var session
     @Binding var selectedTab: String
     var onBack: (() -> Void)?
     @State private var isReprocessing = false
@@ -28,6 +29,8 @@ struct MeetingDetailView: View {
     @State private var isRunningRecipe = false
     @State private var showRecipeResult = false
     @State private var activeRecipeName = ""
+    @State private var titleHovered = false
+    @FocusState private var titleFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -200,9 +203,7 @@ struct MeetingDetailView: View {
             }
 
             // Editable meeting title
-            TextField("Meeting Title", text: $meeting.title)
-                .font(.title2.bold())
-                .textFieldStyle(.plain)
+            editableTitle
 
             if let attendees = meeting.calendarAttendees, attendees.count > 1, meeting.duration > 0 {
                 let hours = Int(ceil(meeting.duration / 3600))
@@ -210,6 +211,7 @@ struct MeetingDetailView: View {
                 Text("\(personHours) person-hours")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .help("Total time across \(attendees.count) attendees (\(Int(meeting.duration / 60)) min × \(attendees.count) attendees). Useful for gauging meeting cost.")
             }
         }
         .padding(.horizontal, 20)
@@ -220,20 +222,60 @@ struct MeetingDetailView: View {
         .clipped()
     }
 
+    @ViewBuilder
+    private var editableTitle: some View {
+        HStack(spacing: 6) {
+            TextField("Meeting Title", text: $meeting.title)
+                .font(.title2.bold())
+                .textFieldStyle(.plain)
+                .focused($titleFocused)
+            if titleHovered && !titleFocused {
+                Image(systemName: "pencil")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .transition(.opacity)
+            }
+        }
+        .padding(.bottom, 2)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(titleFocused ? Color.accentColor.opacity(0.6) : Color.clear)
+                .frame(height: 1)
+        }
+        .contentShape(.rect)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.12)) { titleHovered = hovering }
+        }
+        .animation(.easeInOut(duration: 0.15), value: titleFocused)
+    }
+
     // MARK: - Glass Tab Bar (overlaid — content scrolls behind it)
     // Uses native Picker which adopts Liquid Glass automatically on macOS 26
 
     private var glassTabBar: some View {
-        Picker("", selection: $selectedTab) {
-            Text("Summary").tag("summary")
-            Text("Transcript").tag("transcript")
-            Text("Notes").tag("notes")
-            Text("Action Items").tag("actions")
-            Text("Chat").tag("chat")
+        VStack(spacing: 4) {
+            if headerCollapsed {
+                HStack {
+                    Text(meeting.title.isEmpty ? "Untitled" : meeting.title)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            Picker("", selection: $selectedTab) {
+                Text("Summary").tag("summary")
+                Text("Transcript").tag("transcript")
+                Text("Notes").tag("notes")
+                Text("Action Items").tag("actions")
+                Text("Chat").tag("chat")
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 20)
         }
-        .pickerStyle(.segmented)
-        .padding(.horizontal, 20)
         .padding(.vertical, 8)
+        .animation(.easeInOut(duration: 0.18), value: headerCollapsed)
     }
 
     private var tabContent: some View {
@@ -657,10 +699,34 @@ struct MeetingDetailView: View {
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         } else {
-                            LiveTranscriptView(
-                                words: meeting.rawTranscript,
-                                localSpeakerName: settings.displayName.isEmpty ? "Me" : settings.displayName
-                            )
+                            // During recording, observe the session's in-memory words
+                            // (SwiftData externalStorage doesn't propagate per-word updates fast enough).
+                            let liveWords: [TranscriptWord] = {
+                                if session.isRecording, session.currentMeeting?.id == meeting.id {
+                                    return session.transcriptWords
+                                }
+                                return meeting.rawTranscript
+                            }()
+                            if liveWords.isEmpty && session.isRecording && session.currentMeeting?.id == meeting.id {
+                                VStack(spacing: 8) {
+                                    HStack(spacing: 6) {
+                                        Circle().fill(.red).frame(width: 6, height: 6).modifier(PulseEffect())
+                                        Text("Listening…")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Text("Transcript will appear here as you speak.")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 40)
+                            } else {
+                                LiveTranscriptView(
+                                    words: liveWords,
+                                    localSpeakerName: settings.displayName.isEmpty ? "Me" : settings.displayName
+                                )
+                            }
                         }
                     }
                     .padding()
@@ -872,7 +938,12 @@ struct MeetingDetailView: View {
             let hitDurationLimit = !currentWords.isEmpty && (wordEnd - segmentStart > 12)
             let hitWordLimit = currentWords.count >= 40
             let speakerChanged = word.speaker != nil && word.speaker != currentSpeaker
-            let localChanged = word.isLocalSpeaker != currentIsLocal
+
+            // For isLocalSpeaker changes (dual-stream), require a gap >1.5s to avoid
+            // splitting on every interleaved mic/system word. Without a gap, absorb
+            // the word into the current segment to maintain readable sentences.
+            let gap = wordStart - segmentEnd
+            let localChanged = word.isLocalSpeaker != currentIsLocal && gap > 1.5
 
             if hitDurationLimit || hitWordLimit || speakerChanged || localChanged {
                 segments.append(

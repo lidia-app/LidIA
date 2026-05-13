@@ -5,18 +5,44 @@ struct SettingsView: View {
     @Bindable var settings: AppSettings
 
     var body: some View {
-        Form {
-            GeneralSettingsTab(settings: settings)
-            LLMSettingsTab(settings: settings)
-            RecordingSettingsTab(settings: settings)
-            VoiceSettingsTab(settings: settings)
-            Section("Integrations") {
+        TabView {
+            Form {
+                GeneralSettingsTab(settings: settings)
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("General", systemImage: "gear") }
+
+            Form {
+                LLMSettingsTab(settings: settings)
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("AI Models", systemImage: "brain") }
+
+            Form {
+                RecordingSettingsTab(settings: settings)
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Recording", systemImage: "waveform") }
+
+            Form {
+                VoiceSettingsTab(settings: settings)
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Voice", systemImage: "mic.fill") }
+
+            Form {
                 CalendarSettingsTab(settings: settings)
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Calendar", systemImage: "calendar") }
+
+            Form {
                 IntegrationSettingsTab(settings: settings)
             }
+            .formStyle(.grouped)
+            .tabItem { Label("Integrations", systemImage: "puzzlepiece.fill") }
         }
-        .formStyle(.grouped)
-        .frame(minWidth: 450, minHeight: 400)
+        .frame(minWidth: 580, idealWidth: 640, minHeight: 520, idealHeight: 600)
     }
 }
 

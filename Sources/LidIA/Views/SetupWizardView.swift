@@ -49,7 +49,7 @@ struct SetupWizardView: View {
             }
         }
         .padding(40)
-        .frame(width: 520, height: 480)
+        .frame(minWidth: 520, idealWidth: 560, minHeight: 480, idealHeight: 520)
         .onAppear {
             if parakeetModelsExist {
                 downloadParakeet = false
@@ -224,11 +224,20 @@ struct SetupWizardView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
 
-                Button("Retry") {
-                    parakeetError = nil
-                    startDownloads()
+                HStack(spacing: 10) {
+                    Button("Retry") {
+                        parakeetError = nil
+                        startDownloads()
+                    }
+                    .buttonStyle(.glass)
+
+                    Button("Skip and continue") {
+                        parakeetError = nil
+                        downloadParakeet = false
+                        startDownloads()
+                    }
+                    .buttonStyle(.glass)
                 }
-                .buttonStyle(.glass)
             }
 
             if let error = modelManager.downloadError {
@@ -236,10 +245,18 @@ struct SetupWizardView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
 
-                Button("Retry") {
-                    startDownloads()
+                HStack(spacing: 10) {
+                    Button("Retry") {
+                        startDownloads()
+                    }
+                    .buttonStyle(.glass)
+
+                    Button("Skip and continue") {
+                        downloadLLM = false
+                        startDownloads()
+                    }
+                    .buttonStyle(.glass)
                 }
-                .buttonStyle(.glass)
             }
 
             if let error = ttsModelManager.downloadError {
@@ -247,19 +264,43 @@ struct SetupWizardView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
 
-                Button("Retry") {
-                    startDownloads()
+                HStack(spacing: 10) {
+                    Button("Retry") {
+                        startDownloads()
+                    }
+                    .buttonStyle(.glass)
+
+                    Button("Skip and continue") {
+                        downloadTTS = false
+                        startDownloads()
+                    }
+                    .buttonStyle(.glass)
                 }
-                .buttonStyle(.glass)
             }
 
-            Button("Cancel") {
-                modelManager.cancelDownload()
-                step = .welcome
+            HStack(spacing: 16) {
+                Button("Back") {
+                    cancelAll()
+                    step = .welcome
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+
+                Button("Cancel setup") {
+                    cancelAll()
+                    settings.hasCompletedSetup = true
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tertiary)
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
         }
+    }
+
+    private func cancelAll() {
+        modelManager.cancelDownload()
+        // TTS and Parakeet downloads run via async APIs without cancel handles today;
+        // task is implicitly cancelled when step changes, but we surface the intent.
+        parakeetError = nil
     }
 
     // MARK: - Ready

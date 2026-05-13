@@ -21,6 +21,12 @@ final class RecordingSettings {
     var noiseReductionEnabled: Bool = false {
         didSet { saveDefault(noiseReductionEnabled, forKey: "noiseReductionEnabled") }
     }
+    var useVADPreFilter: Bool = true {
+        didSet { saveDefault(useVADPreFilter, forKey: "useVADPreFilter") }
+    }
+    var useSpeechEnhancement: Bool = false {
+        didSet { saveDefault(useSpeechEnhancement, forKey: "useSpeechEnhancement") }
+    }
 
     // MARK: - Init
 
@@ -41,6 +47,12 @@ final class RecordingSettings {
             displayName = name
         }
         noiseReductionEnabled = defaults.bool(forKey: "noiseReductionEnabled")
+        if defaults.object(forKey: "useVADPreFilter") != nil {
+            useVADPreFilter = defaults.bool(forKey: "useVADPreFilter")
+        }
+        if defaults.object(forKey: "useSpeechEnhancement") != nil {
+            useSpeechEnhancement = defaults.bool(forKey: "useSpeechEnhancement")
+        }
     }
 
     // MARK: - Persistence Helpers

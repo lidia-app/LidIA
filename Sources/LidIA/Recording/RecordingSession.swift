@@ -73,6 +73,7 @@ final class RecordingSession {
     private var storedModelContext: ModelContext?
     private var storedSettings: AppSettings?
     private var storedEventKitManager: EventKitManager?
+    private var storedGoogleCalendarMonitor: GoogleCalendarMonitor?
     private var storedModelManager: ModelManager?
     private var storedMeetingDetector: MeetingDetector?
 
@@ -89,7 +90,7 @@ final class RecordingSession {
     private let pillController = RecordingPillController()
 
     @discardableResult
-    func startRecording(modelContext: ModelContext, settings: AppSettings, modelManager: ModelManager? = nil, meetingDetector: MeetingDetector? = nil) -> Meeting {
+    func startRecording(modelContext: ModelContext, settings: AppSettings, modelManager: ModelManager? = nil, meetingDetector: MeetingDetector? = nil, eventKitManager: EventKitManager? = nil, googleCalendarMonitor: GoogleCalendarMonitor? = nil) -> Meeting {
         let meeting = Meeting(date: .now)
         modelContext.insert(meeting)
         currentMeeting = meeting
@@ -99,6 +100,8 @@ final class RecordingSession {
         storedSettings = settings
         storedModelManager = modelManager
         storedMeetingDetector = meetingDetector
+        storedEventKitManager = eventKitManager
+        storedGoogleCalendarMonitor = googleCalendarMonitor
         silenceDetector.reset()
         extendedSilenceDetector.reset()
         // Cancel any in-flight tasks from a previous recording to prevent leaks
@@ -114,6 +117,31 @@ final class RecordingSession {
         autoStopCountdownTask = nil
         liveSummaryTask?.cancel()
         liveSummaryTask = nil
+
+        // Auto-associate with nearby calendar event (15 min window)
+        if meeting.calendarEventID == nil {
+            let now = Date()
+            let windowStart = now.addingTimeInterval(-5 * 60)
+            let windowEnd = now.addingTimeInterval(15 * 60)
+            // Check Google Calendar events
+            if let gcMonitor = googleCalendarMonitor, gcMonitor.isSignedIn,
+               let event = gcMonitor.weekEvents.first(where: {
+                   $0.start >= windowStart && $0.start <= windowEnd
+               }) {
+                meeting.title = event.title
+                meeting.calendarEventID = event.id
+                meeting.calendarAttendees = event.attendees
+            }
+            // Check Apple Calendar events
+            else if let ekManager = eventKitManager,
+                    let event = ekManager.upcomingEvents.first(where: {
+                        $0.start >= windowStart && $0.start <= windowEnd
+                    }) {
+                meeting.title = event.title
+                meeting.calendarEventID = event.id
+                meeting.calendarAttendees = event.attendees
+            }
+        }
 
         // Preload MLX model if using local provider
         if settings.llmProvider == .mlx, let modelManager = storedModelManager {
@@ -362,6 +390,33 @@ final class RecordingSession {
 
         let drainResult = captureService.stopCaptureAndDrainSamples()
         sourceEvents.append(contentsOf: drainResult.sourceEvents)
+
+        // === DIAGNOSTIC: Audio capture analysis ===
+        let micSampleCount = drainResult.mic.count
+        let sysSampleCount = drainResult.system.count
+        let micDuration = Double(micSampleCount) / 16000.0
+        let sysDuration = Double(sysSampleCount) / 16000.0
+        let micEvents = sourceEvents.filter { $0.source == .mic }
+        let sysEvents = sourceEvents.filter { $0.source == .system }
+        let avgMicRMS = micEvents.isEmpty ? 0 : micEvents.map(\.rms).reduce(0, +) / Float(micEvents.count)
+        let avgSysRMS = sysEvents.isEmpty ? 0 : sysEvents.map(\.rms).reduce(0, +) / Float(sysEvents.count)
+        let wordCount = self.transcriptWords.count
+        let localTrue = self.transcriptWords.filter { $0.isLocalSpeaker == true }.count
+        let localFalse = self.transcriptWords.filter { $0.isLocalSpeaker == false }.count
+        let localNil = self.transcriptWords.filter { $0.isLocalSpeaker == nil }.count
+        Self.logger.warning("""
+            📊 AUDIO CAPTURE DIAGNOSTIC:
+            Capture mode: \(self.captureService.activeCaptureMode == .micAndSystem ? "Mic+System" : "Mic Only")
+            Mic samples: \(micSampleCount) (\(String(format: "%.1f", micDuration))s)
+            System samples: \(sysSampleCount) (\(String(format: "%.1f", sysDuration))s)
+            Source events: \(micEvents.count) mic, \(sysEvents.count) system
+            Avg RMS: mic=\(String(format: "%.4f", avgMicRMS)), system=\(String(format: "%.4f", avgSysRMS))
+            Live words captured: \(wordCount)
+            Words with isLocalSpeaker=true: \(localTrue)
+            Words with isLocalSpeaker=false: \(localFalse)
+            Words with isLocalSpeaker=nil: \(localNil)
+            """)
+        // === END DIAGNOSTIC ===
 
         recordingTask?.cancel()
         recordingTask = nil

@@ -8,8 +8,27 @@ private let batchLogger = Logger(subsystem: "io.lidia.app", category: "ParakeetB
 /// Uses AsrManager for transcription and OfflineDiarizerManager for speaker labels.
 actor ParakeetBatchProcessor {
 
+    /// Transcribe audio samples into words WITHOUT diarization.
+    /// Used for separate mic/system audio transcription (Granola approach).
+    func transcribeOnly(samples: [Float], vocabulary: [AppSettings.VocabularyEntry] = []) async throws -> [TranscriptWord] {
+        guard !samples.isEmpty else { return [] }
+        let duration = Double(samples.count) / 16000.0
+        batchLogger.info("Transcribe-only: \(String(format: "%.1f", duration))s of audio")
+
+        let models = try await AsrModels.downloadAndLoad(version: .v3)
+        let asrManager = AsrManager(config: .default)
+        try await asrManager.initialize(models: models)
+        try await Self.configureVocabulary(asrManager: asrManager, vocabulary: vocabulary)
+        let result = try await asrManager.transcribe(samples, source: .microphone)
+        let words: [TranscriptWord] = (result.tokenTimings ?? []).map { timing in
+            TranscriptWord(word: timing.token, start: timing.startTime, end: timing.endTime, confidence: Double(result.confidence))
+        }
+        batchLogger.info("Transcribe-only produced \(words.count) words")
+        return words
+    }
+
     /// Process accumulated 16kHz mono samples into a diarized transcript.
-    func process(samples: [Float], systemSamples: [Float], enableDiarization: Bool) async throws -> [TranscriptWord] {
+    func process(samples: [Float], systemSamples: [Float], enableDiarization: Bool, vocabulary: [AppSettings.VocabularyEntry] = []) async throws -> [TranscriptWord] {
         guard !samples.isEmpty else { return [] }
 
         // TODO: DeepFilterNet noise reduction
@@ -26,9 +45,10 @@ actor ParakeetBatchProcessor {
         let models = try await AsrModels.downloadAndLoad(version: .v3)
         let asrManager = AsrManager(config: .default)
         try await asrManager.initialize(models: models)
+        try await Self.configureVocabulary(asrManager: asrManager, vocabulary: vocabulary)
 
         let result = try await asrManager.transcribe(samples, source: .microphone)
-        asrManager.cleanup()
+        await asrManager.cleanup()
 
         // Merge sub-word tokens into whole words.
         // tokenTimings contains SentencePiece tokens where "▁" is replaced with " ".
@@ -136,6 +156,33 @@ actor ParakeetBatchProcessor {
         }
 
         return words
+    }
+
+    // MARK: - Custom Vocabulary
+
+    /// Configure FluidAudio vocabulary boosting on an AsrManager from LidIA vocabulary entries.
+    /// Downloads CTC models on first use, then maps VocabularyEntry → CustomVocabularyTerm.
+    private static func configureVocabulary(
+        asrManager: AsrManager,
+        vocabulary: [AppSettings.VocabularyEntry]
+    ) async throws {
+        guard !vocabulary.isEmpty else { return }
+
+        let terms = vocabulary.map { entry in
+            CustomVocabularyTerm(
+                text: entry.replaceTo,
+                weight: 10.0,
+                aliases: [entry.heardAs]
+            )
+        }
+        let context = CustomVocabularyContext(terms: terms)
+        let ctcModels = try await CtcModels.downloadAndLoad()
+
+        try await asrManager.configureVocabularyBoosting(
+            vocabulary: context,
+            ctcModels: ctcModels
+        )
+        batchLogger.info("Vocabulary boosting configured with \(terms.count) terms")
     }
 
     // MARK: - Local Speaker Assignment

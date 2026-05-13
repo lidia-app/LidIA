@@ -4,6 +4,9 @@ import MLX
 import Observation
 import MLXLLM
 import MLXLMCommon
+import MLXHuggingFace
+import HuggingFace
+import Tokenizers
 import os
 
 // MARK: - ModelSpec
@@ -148,12 +151,15 @@ final class ModelManager {
                 // Run heavy download+load off main actor
                 let container = try await Task.detached {
                     try await LLMModelFactory.shared.loadContainer(
-                        configuration: config
-                    ) { progress in
-                        Task { @MainActor in
-                            self.downloadProgress = progress.fractionCompleted
+                        from: #hubDownloader(),
+                        using: #huggingFaceTokenizerLoader(),
+                        configuration: config,
+                        progressHandler: { progress in
+                            Task { @MainActor in
+                                self.downloadProgress = progress.fractionCompleted
+                            }
                         }
-                    }
+                    )
                 }.value
 
                 self.modelContainer = container
@@ -193,8 +199,10 @@ final class ModelManager {
         let config = ModelConfiguration(id: modelID)
         let container = try await Task.detached {
             try await LLMModelFactory.shared.loadContainer(
+                from: #hubDownloader(),
+                using: #huggingFaceTokenizerLoader(),
                 configuration: config
-            ) { _ in }
+            )
         }.value
 
         self.modelContainer = container

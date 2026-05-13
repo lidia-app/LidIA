@@ -15,12 +15,10 @@ final class TTSModelManager {
     }
 
     let availableModels: [TTSModelInfo] = [
-        TTSModelInfo(id: "mlx-community/Kokoro-82M-8bit",
-                     name: "Kokoro 82M (Recommended)", sizeDescription: "≈150 MB"),
+        TTSModelInfo(id: "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit",
+                     name: "Qwen3-TTS 0.6B (Recommended)", sizeDescription: "≈0.6 GB"),
         TTSModelInfo(id: "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-6bit",
                      name: "Qwen3-TTS 1.7B (VoiceDesign)", sizeDescription: "≈1.3 GB"),
-        TTSModelInfo(id: "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit",
-                     name: "Qwen3-TTS 0.6B (faster)", sizeDescription: "≈0.6 GB"),
     ]
 
     private(set) var downloadedModelIDs: Set<String> = []

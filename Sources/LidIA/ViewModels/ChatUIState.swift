@@ -4,7 +4,6 @@ import SwiftUI
 @Observable
 final class ChatUIState {
     var chatFocusTrigger = false
-    var chatPopupVisible = false
     var chatFullscreenThreadID: UUID?
 
     /// Persisted via UserDefaults (can't use @AppStorage inside @Observable)

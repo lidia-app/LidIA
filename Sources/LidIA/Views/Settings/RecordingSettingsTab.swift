@@ -43,16 +43,16 @@ struct RecordingSettingsTab: View {
                 .foregroundStyle(.secondary)
         }
 
-        Section("Audio Enhancement") {
-            Toggle("Noise Reduction", isOn: $settings.noiseReductionEnabled)
-            Text("Reduces background noise before transcription using DeepFilterNet. May add processing time.")
+        Section("Audio Processing") {
+            Toggle("VAD Pre-Filtering", isOn: $settings.useVADPreFilter)
+            Text("Strips silence before batch transcription. Speeds up processing and improves accuracy.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            if settings.noiseReductionEnabled {
-                Label("Available after next dependency update", systemImage: "clock")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-            }
+
+            Toggle("Speech Enhancement", isOn: $settings.useSpeechEnhancement)
+            Text("DeepFilterNet3 noise reduction. Improves transcription in noisy environments. Adds processing time.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 }

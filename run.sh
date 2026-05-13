@@ -78,19 +78,31 @@ fi
 # MLX requires a pre-compiled default.metallib in mlx-swift_Cmlx.bundle/
 MLX_METAL_DIR="${ROOT_DIR}/.build/checkouts/mlx-swift/Source/Cmlx/mlx-generated/metal"
 MLX_BUNDLE="${RESOURCES}/mlx-swift_Cmlx.bundle"
-if [ -d "${MLX_METAL_DIR}" ]; then
-    MLX_METALLIB="${MLX_BUNDLE}/default.metallib"
-    if [ ! -f "${MLX_METALLIB}" ]; then
+MLX_METALLIB="${MLX_BUNDLE}/default.metallib"
+if [ -d "${MLX_METAL_DIR}" ] && [ ! -f "${MLX_METALLIB}" ]; then
+    mkdir -p "${MLX_BUNDLE}"
+    # Probe Metal toolchain — on macOS 26+ it requires `xcodebuild -downloadComponent MetalToolchain`
+    if xcrun -sdk macosx metal --version >/dev/null 2>&1; then
         echo "==> Compiling MLX Metal shaders..."
-        mkdir -p "${MLX_BUNDLE}"
         AIR_DIR=$(mktemp -d)
         find "${MLX_METAL_DIR}" -name "*.metal" -print0 | while IFS= read -r -d '' f; do
             name=$(basename "$f" .metal)
-            xcrun -sdk macosx metal -c -I "${MLX_METAL_DIR}" "$f" -o "${AIR_DIR}/${name}.air" 2>/dev/null
+            xcrun -sdk macosx metal -c -I "${MLX_METAL_DIR}" "$f" -o "${AIR_DIR}/${name}.air" 2>/dev/null || true
         done
-        xcrun -sdk macosx metallib "${AIR_DIR}"/*.air -o "${MLX_METALLIB}" 2>/dev/null
+        if compgen -G "${AIR_DIR}/*.air" >/dev/null; then
+            xcrun -sdk macosx metallib "${AIR_DIR}"/*.air -o "${MLX_METALLIB}" 2>/dev/null || true
+        fi
         rm -rf "${AIR_DIR}"
-        echo "==> MLX metallib compiled: $(du -h "${MLX_METALLIB}" | cut -f1)"
+    fi
+    # Fallback: reuse the previously-installed app's metallib if compile was skipped/failed
+    if [ ! -s "${MLX_METALLIB}" ] && [ -f "/Applications/LidIA.app/Contents/Resources/mlx-swift_Cmlx.bundle/default.metallib" ]; then
+        echo "==> MLX metallib: Metal toolchain unavailable, reusing /Applications/LidIA.app metallib"
+        cp "/Applications/LidIA.app/Contents/Resources/mlx-swift_Cmlx.bundle/default.metallib" "${MLX_METALLIB}"
+    fi
+    if [ -f "${MLX_METALLIB}" ]; then
+        echo "==> MLX metallib ready: $(du -h "${MLX_METALLIB}" | cut -f1)"
+    else
+        echo "    Warning: no MLX metallib available. Install Metal toolchain: xcodebuild -downloadComponent MetalToolchain"
     fi
 fi
 

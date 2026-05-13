@@ -34,6 +34,17 @@ actor N8nClient {
         var attendeeContext: [AttendeeContext] = []
     }
 
+    struct DispatchPayload: Encodable, Sendable {
+        let type = "dispatch"
+        let channel: String       // "slack", "email", "ticket", "reminder"
+        let recipient: String?
+        let draft: String
+        let ticketTitle: String?
+        let meetingTitle: String?
+        let actionItemTitle: String?
+        let actionItemID: String?
+    }
+
     /// Sends a pre-built payload to the configured n8n webhook URL.
     /// This is fire-and-forget: errors are logged but never thrown.
     static func sendWebhook(
@@ -70,6 +81,48 @@ actor N8nClient {
             }
         } catch {
             logger.error("n8n: webhook request failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Sends a dispatcher action payload to n8n and returns whether it succeeded.
+    static func sendDispatch(
+        payload: DispatchPayload,
+        webhookURL: String,
+        authHeader: String?
+    ) async -> Bool {
+        guard let url = URL(string: webhookURL) else {
+            logger.error("n8n: invalid dispatch webhook URL: \(webhookURL)")
+            return false
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        if let auth = authHeader, !auth.isEmpty {
+            request.setValue(auth, forHTTPHeaderField: "Authorization")
+        }
+
+        do {
+            let data = try JSONEncoder().encode(payload)
+            request.httpBody = data
+
+            let (_, response) = try await URLSession.shared.data(for: request)
+
+            if let http = response as? HTTPURLResponse {
+                if (200..<300).contains(http.statusCode) {
+                    logger.info("n8n: dispatch sent successfully (HTTP \(http.statusCode), channel=\(payload.channel))")
+                    return true
+                } else {
+                    logger.warning("n8n: dispatch returned HTTP \(http.statusCode) for channel=\(payload.channel)")
+                    return false
+                }
+            }
+            return false
+        } catch {
+            logger.error("n8n: dispatch request failed: \(error.localizedDescription)")
+            return false
         }
     }
 }

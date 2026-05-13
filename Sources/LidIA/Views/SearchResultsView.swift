@@ -24,9 +24,13 @@ struct SearchResultsView: View {
                     .textSelection(.enabled)
 
                 // Source meetings
-                if !response.sourceMeetings.isEmpty {
+                if response.sourceMeetings.isEmpty {
+                    Text("No meetings matched this query.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
                     Divider()
-                    Text("Referenced Meetings")
+                    Text("Referenced Meetings (\(response.sourceMeetings.count))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     ForEach(response.sourceMeetings) { meeting in
@@ -45,6 +49,13 @@ struct SearchResultsView: View {
                         .buttonStyle(.plain)
                     }
                 }
+            } else {
+                ContentUnavailableView {
+                    Label("Ask anything about your meetings", systemImage: "sparkles")
+                } description: {
+                    Text("Try \"What did we decide about pricing?\" or \"Who owns the Q3 launch?\"")
+                }
+                .frame(minHeight: 200)
             }
         }
         .padding()

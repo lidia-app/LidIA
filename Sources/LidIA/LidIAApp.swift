@@ -15,6 +15,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     @MainActor static var settings: AppSettings?
     @MainActor static var modelContainer: ModelContainer?
     @MainActor static var meetingDetectorRef: MeetingDetector?
+    @MainActor static var eventKitManagerRef: EventKitManager?
+    @MainActor static var googleCalendarMonitorRef: GoogleCalendarMonitor?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -22,6 +24,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         if Bundle.main.bundleIdentifier != nil {
             UNUserNotificationCenter.current().delegate = self
             EventKitManager.registerNotificationCategories()
+        }
+
+        // Force macOS to re-read icon from bundle (fixes cached notification icon)
+        let lsregisterPath = "/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+        if FileManager.default.fileExists(atPath: lsregisterPath) {
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: lsregisterPath)
+            task.arguments = ["-f", Bundle.main.bundlePath]
+            try? task.run()
         }
     }
 
@@ -83,7 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         guard !session.isRecording else { return }
 
         let context = ModelContext(container)
-        let meeting = session.startRecording(modelContext: context, settings: settings, meetingDetector: meetingDetectorRef)
+        let meeting = session.startRecording(modelContext: context, settings: settings, meetingDetector: meetingDetectorRef, eventKitManager: eventKitManagerRef, googleCalendarMonitor: googleCalendarMonitorRef)
         if let eventTitle {
             meeting.title = eventTitle
         }
@@ -217,6 +228,8 @@ struct LidIAApp: App {
                     AppDelegate.settings = settings
                     AppDelegate.modelContainer = sharedModelContainer
                     AppDelegate.meetingDetectorRef = meetingDetector
+                    AppDelegate.eventKitManagerRef = eventKitManager
+                    AppDelegate.googleCalendarMonitorRef = googleCalendarMonitor
                     eventKitManager.backgroundContext = backgroundContext
 
                     menuBarController.setup(
@@ -335,7 +348,7 @@ struct LidIAApp: App {
 
         joinBannerController.show(
             meeting: pending,
-            onJoin: { [session, settings, backgroundContext, proactiveScheduler] in
+            onJoin: { [session, settings, backgroundContext, proactiveScheduler, eventKitManager, googleCalendarMonitor] in
                 guard !session.isRecording, let bgCtx = backgroundContext else { return }
 
                 // Open the meeting link if available
@@ -344,7 +357,7 @@ struct LidIAApp: App {
                 }
 
                 // Start recording with event metadata
-                let meeting = session.startRecording(modelContext: bgCtx, settings: settings, meetingDetector: meetingDetector)
+                let meeting = session.startRecording(modelContext: bgCtx, settings: settings, meetingDetector: meetingDetector, eventKitManager: eventKitManager, googleCalendarMonitor: googleCalendarMonitor)
                 meeting.title = pending.title
                 meeting.calendarEventID = pending.eventID
                 meeting.calendarAttendees = pending.attendees
@@ -367,9 +380,9 @@ struct LidIAApp: App {
             return
         }
 
-        bannerController.show(appName: detected.name) { [session, settings, backgroundContext, meetingDetector, googleCalendarMonitor] in
+        bannerController.show(appName: detected.name) { [session, settings, backgroundContext, meetingDetector, googleCalendarMonitor, eventKitManager] in
             guard !session.isRecording, let bgCtx = backgroundContext else { return }
-            let meeting = session.startRecording(modelContext: bgCtx, settings: settings, meetingDetector: meetingDetector)
+            let meeting = session.startRecording(modelContext: bgCtx, settings: settings, meetingDetector: meetingDetector, eventKitManager: eventKitManager, googleCalendarMonitor: googleCalendarMonitor)
 
             // Try to match a calendar event happening now
             if let matchingEvent = findCurrentCalendarEvent(

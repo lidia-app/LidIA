@@ -443,6 +443,14 @@ final class AppSettings {
         get { recording.noiseReductionEnabled }
         set { recording.noiseReductionEnabled = newValue }
     }
+    var useVADPreFilter: Bool {
+        get { recording.useVADPreFilter }
+        set { recording.useVADPreFilter = newValue }
+    }
+    var useSpeechEnhancement: Bool {
+        get { recording.useSpeechEnhancement }
+        set { recording.useSpeechEnhancement = newValue }
+    }
 
     // MARK: - Nested Types
 

@@ -151,9 +151,17 @@ private struct CompanyRow: View {
 
     var body: some View {
         HStack {
-            Image(systemName: "building.2")
-                .foregroundStyle(.secondary)
-                .frame(width: 32, height: 32)
+            AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(company.domain)&sz=32")) { phase in
+                switch phase {
+                case .success(let image):
+                    image.resizable().frame(width: 20, height: 20)
+                default:
+                    Image(systemName: "building.2")
+                        .font(.caption)
+                }
+            }
+            .foregroundStyle(.secondary)
+            .frame(width: 32, height: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(company.name)
                     .font(.subheadline.bold())

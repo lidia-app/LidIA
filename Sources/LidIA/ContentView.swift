@@ -7,6 +7,7 @@ struct ContentView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(RecordingSession.self) private var session
     @Environment(EventKitManager.self) private var eventKitManager
+    @Environment(GoogleCalendarMonitor.self) private var googleCalendarMonitor
     @Environment(MeetingDetector.self) private var meetingDetector
     @Environment(ModelManager.self) private var modelManager
     @Environment(MeetingQueryService.self) private var queryService
@@ -80,9 +81,23 @@ struct ContentView: View {
                 // Clear any pushed views (PersonDetail, ChatThread, etc.) when switching workspaces
                 nav.detailPath = NavigationPath()
             }
+            .onChange(of: nav.sidebarTab) { _, tab in
+                switch tab {
+                case .chat:
+                    nav.selectedMeeting = nil
+                    nav.detailDestination = .chat
+                case .home:
+                    if nav.selectedMeeting == nil {
+                        nav.detailDestination = .home
+                    }
+                default:
+                    break
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: .lidiaOpenHomeWorkspace)) { _ in
                 nav.selectedMeeting = nil
                 nav.selectedCalendarEvent = nil
+                nav.sidebarTab = .home
                 nav.detailDestination = .home
             }
             .onReceive(NotificationCenter.default.publisher(for: .lidiaOpenActionItemsWorkspace)) { _ in
@@ -130,91 +145,82 @@ struct ContentView: View {
                         chatUI.chatFocusTrigger.toggle()
                     } label: { EmptyView() }
                     .keyboardShortcut("k", modifiers: .command)
+
+                    Button {
+                        nav.sidebarTab = .search
+                    } label: { EmptyView() }
+                    .keyboardShortcut("f", modifiers: .command)
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
             }
     }
 
-    private var activeWorkspaceItemID: String? {
-        switch nav.detailDestination {
-        case .home: "home"
-        case .chat: "chat"
-        case .actionItems: "actionItems"
-        case .people: "people"
-        case .meeting, .calendarEvent: nil
-        }
-    }
-
     // MARK: - Main Content
 
     private var mainContent: some View {
         NavigationSplitView(columnVisibility: $nav.columnVisibility) {
-            VStack(spacing: 0) {
-                MeetingListView(
-                    searchFocusTrigger: $nav.searchFocusTrigger,
-                    selectedFolder: $nav.selectedFolder,
-                    onOpenHome: { nav.selectedMeeting = nil; nav.selectedCalendarEvent = nil; nav.detailDestination = .home },
-                    onOpenChat: { nav.selectedMeeting = nil; nav.detailDestination = .chat },
-                    onOpenActionItems: { nav.selectedMeeting = nil; nav.detailDestination = .actionItems },
-                    onOpenPeople: { nav.selectedMeeting = nil; nav.detailDestination = .people },
-                    onSelectMeeting: { meeting in nav.selectedMeeting = meeting; nav.detailDestination = .meeting },
-                    activeWorkspaceItem: activeWorkspaceItemID
-                )
-
-                Divider()
-
-                // Compact sidebar recording status
-                if session.isRecording {
-                    VStack(alignment: .leading, spacing: 4) {
-                        if let countdown = session.autoStopCountdown {
-                            HStack(spacing: 6) {
-                                Circle()
-                                    .fill(.orange)
-                                    .frame(width: 8, height: 8)
-                                Text("Stopping in \(countdown)s")
-                                    .font(.caption2.bold())
-                                    .foregroundStyle(.orange)
-                                Spacer()
-                            }
-                            HStack(spacing: 8) {
-                                Button("Keep Recording") {
-                                    session.cancelAutoStop()
-                                }
-                                .font(.caption2)
-                                .buttonStyle(.borderedProminent)
-                                .tint(.green)
-                                .controlSize(.mini)
-
-                                Button("Stop") {
-                                    session.confirmAutoStop()
-                                }
-                                .font(.caption2)
-                                .buttonStyle(.bordered)
-                                .controlSize(.mini)
-                            }
-                        } else {
-                            HStack(spacing: 6) {
-                                Circle()
-                                    .fill(session.isPaused ? .orange : .red)
-                                    .frame(width: 8, height: 8)
-                                Text(formatTime(session.elapsedTime))
-                                    .font(.system(.caption2, design: .monospaced))
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                            }
-                        }
-                        if let status = session.captureStatusMessage {
-                            Text(status)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
+            SidebarView(
+                sidebarTab: $nav.sidebarTab,
+                selectedFolder: $nav.selectedFolder,
+                onSelectMeeting: { meeting in
+                    nav.selectedMeeting = meeting
+                    nav.detailDestination = .meeting
+                },
+                onSelectEvent: { event in
+                    nav.selectedCalendarEvent = event
+                    nav.selectedMeeting = nil
+                    nav.detailDestination = .calendarEvent
+                },
+                onOpenActionItems: {
+                    nav.selectedMeeting = nil
+                    nav.detailDestination = .actionItems
+                },
+                onOpenPeople: {
+                    nav.selectedMeeting = nil
+                    nav.detailDestination = .people
+                },
+                onRecord: { event in
+                    if let link = event.meetingLink {
+                        NSWorkspace.shared.open(link)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    startRecordingFromGoogleEvent(event)
+                },
+                onSelectMeetingByID: { meetingID in
+                    let descriptor = FetchDescriptor<Meeting>(predicate: #Predicate<Meeting> { $0.id == meetingID })
+                    if let meeting = try? modelContext.fetch(descriptor).first {
+                        nav.selectedMeeting = meeting
+                        nav.detailDestination = .meeting
+                    }
+                },
+                onSelectThread: { threadID in
+                    chatUI.chatFullscreenThreadID = threadID
+                    nav.detailDestination = .chat
+                },
+                activeThreadID: chatViewModel.activeThreadID,
+                onNewChat: {
+                    nav.sidebarTab = .chat
+                    nav.selectedMeeting = nil
+                    nav.detailDestination = .chat
+                },
+                onNewNote: {
+                    createQuickNote()
+                },
+                onTabReclick: { tab in
+                    switch tab {
+                    case .home:
+                        nav.selectedMeeting = nil
+                        nav.selectedCalendarEvent = nil
+                        nav.detailDestination = .home
+                    case .chat:
+                        chatUI.chatFullscreenThreadID = nil
+                        nav.selectedMeeting = nil
+                        nav.detailDestination = .chat
+                    default:
+                        break
+                    }
                 }
-            }
+            )
             .navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 300)
             .scrollContentBackground(.hidden)
             .background(.thinMaterial)
@@ -224,13 +230,6 @@ struct ContentView: View {
                         Label("Settings", systemImage: "gear")
                     }
                     .buttonStyle(.glass)
-                }
-                ToolbarItem(placement: .automatic) {
-                    Button { createQuickNote() } label: {
-                        Label("New Note", systemImage: "square.and.pencil")
-                    }
-                    .buttonStyle(.glass)
-                    .help("New Note (Shift+Cmd+N)")
                 }
             }
         } detail: {
@@ -330,44 +329,22 @@ struct ContentView: View {
                 .padding(.vertical, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else if chatUI.quickChatVisible && nav.detailDestination != .chat {
-            VStack(spacing: 8) {
-                if chatUI.chatPopupVisible {
-                    ChatPopupView(
-                        viewModel: chatViewModel,
-                        onClose: {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                chatUI.chatPopupVisible = false
-                            }
-                        },
-                        onGoFullscreen: {
-                            chatUI.chatFullscreenThreadID = chatViewModel.activeThreadID
-                            chatUI.chatPopupVisible = false
-                            nav.detailDestination = .chat
-                        }
-                    )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-
-                ChatBarView(
-                    viewModel: chatViewModel,
-                    availableModels: settings.availableModels,
-                    provider: settings.llmProvider,
-                    onClose: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            chatUI.quickChatVisible = false
-                            chatUI.chatPopupVisible = false
-                        }
-                    },
-                    isExpanded: $chatUI.quickChatExpanded,
-                    onTogglePopup: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            chatUI.chatPopupVisible.toggle()
-                        }
-                    },
-                    isPopupVisible: chatUI.chatPopupVisible,
-                    focusTrigger: $chatUI.chatFocusTrigger
-                )
-            }
+            ChatBarView(
+                viewModel: chatViewModel,
+                availableModels: settings.availableModels,
+                provider: settings.llmProvider,
+                onClose: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        chatUI.quickChatVisible = false
+                    }
+                },
+                isExpanded: $chatUI.quickChatExpanded,
+                onExpandFullscreen: {
+                    chatUI.chatFullscreenThreadID = chatViewModel.activeThreadID
+                    nav.detailDestination = .chat
+                },
+                focusTrigger: $chatUI.chatFocusTrigger
+            )
             .padding(.horizontal, 18)
             .padding(.vertical, 8)
             .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -441,7 +418,7 @@ struct ContentView: View {
     // MARK: - Actions
 
     private func startRecording() {
-        let meeting = session.startRecording(modelContext: modelContext, settings: settings, modelManager: modelManager, meetingDetector: meetingDetector)
+        let meeting = session.startRecording(modelContext: modelContext, settings: settings, modelManager: modelManager, meetingDetector: meetingDetector, eventKitManager: eventKitManager, googleCalendarMonitor: googleCalendarMonitor)
         nav.selectedMeeting = meeting
     }
 
@@ -457,7 +434,7 @@ struct ContentView: View {
     }
 
     private func createQuickNote() {
-        let meeting = session.startRecording(modelContext: modelContext, settings: settings, modelManager: modelManager, meetingDetector: meetingDetector)
+        let meeting = session.startRecording(modelContext: modelContext, settings: settings, modelManager: modelManager, meetingDetector: meetingDetector, eventKitManager: eventKitManager, googleCalendarMonitor: googleCalendarMonitor)
         meeting.title = "Quick Note"
         nav.selectedMeeting = meeting
         nav.detailDestination = .meeting

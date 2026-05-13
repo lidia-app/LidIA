@@ -23,17 +23,101 @@ final class PostProcessingService {
         let useParakeetBatch = settings.sttEngine == .parakeet && !combinedSamples.isEmpty
         let useGraniteBatch = settings.sttEngine == .graniteSpeech && !combinedSamples.isEmpty
         let enableDiarization = settings.enableDiarization
+        let vadEnabled = settings.useVADPreFilter
+        let enhanceEnabled = settings.useSpeechEnhancement
+
+        // === DIAGNOSTIC: Post-processing input analysis ===
+        Self.logger.warning("""
+            📊 POST-PROCESSING DIAGNOSTIC:
+            Mic samples: \(micSamples.count) (\(String(format: "%.1f", Double(micSamples.count)/16000.0))s)
+            System samples: \(systemSamples.count) (\(String(format: "%.1f", Double(systemSamples.count)/16000.0))s)
+            Combined: \(combinedSamples.count) (\(String(format: "%.1f", Double(combinedSamples.count)/16000.0))s)
+            Use Parakeet batch: \(useParakeetBatch)
+            Use Granite batch: \(useGraniteBatch)
+            Diarization enabled: \(enableDiarization)
+            Source events: \(sourceEvents.count)
+            """)
+        // === END DIAGNOSTIC ===
 
         do {
+            // === VAD PRE-FILTER: Strip silence before batch STT ===
+            var filteredMic = micSamples
+            var filteredSystem = systemSamples
+            var filteredCombined = combinedSamples
+
+            if vadEnabled && !combinedSamples.isEmpty {
+                do {
+                    let vad = VADFilter.shared
+                    if !micSamples.isEmpty {
+                        filteredMic = try await vad.filterSpeech(samples: micSamples, sampleRate: 16000)
+                    }
+                    if !systemSamples.isEmpty {
+                        filteredSystem = try await vad.filterSpeech(samples: systemSamples, sampleRate: 16000)
+                    }
+                    filteredCombined = filteredMic + filteredSystem
+                    Self.logger.info("VAD pre-filter complete: \(combinedSamples.count) → \(filteredCombined.count) samples")
+                } catch {
+                    Self.logger.warning("VAD pre-filter failed, using unfiltered audio: \(error.localizedDescription)")
+                    filteredMic = micSamples
+                    filteredSystem = systemSamples
+                    filteredCombined = combinedSamples
+                }
+            }
+
+            // === SPEECH ENHANCEMENT: Denoise before batch STT ===
+            if enhanceEnabled && !filteredCombined.isEmpty {
+                do {
+                    let enhancer = SpeechEnhancerWrapper.shared
+                    if !filteredMic.isEmpty {
+                        filteredMic = try await enhancer.enhance(samples: filteredMic, sampleRate: 16000)
+                    }
+                    if !filteredSystem.isEmpty {
+                        filteredSystem = try await enhancer.enhance(samples: filteredSystem, sampleRate: 16000)
+                    }
+                    filteredCombined = filteredMic + filteredSystem
+                    Self.logger.info("Speech enhancement complete: \(filteredCombined.count) samples")
+                } catch {
+                    Self.logger.warning("Speech enhancement failed, using unenhanced audio: \(error.localizedDescription)")
+                    // Fall through with existing filtered samples
+                }
+            }
+
             if useParakeetBatch {
-                Self.logger.info("Running batch re-transcription with \(combinedSamples.count) samples")
                 let processor = ParakeetBatchProcessor()
-                let batchWords = try await processor.process(
-                    samples: combinedSamples,
-                    systemSamples: systemSamples,
-                    enableDiarization: enableDiarization
-                )
-                if !batchWords.isEmpty {
+
+                // === GRANOLA APPROACH: Transcribe mic and system audio SEPARATELY ===
+                if !filteredMic.isEmpty && !filteredSystem.isEmpty {
+                    Self.logger.info("Using dual-stream transcription: mic=\(filteredMic.count) system=\(filteredSystem.count)")
+
+                    // Transcribe each stream independently
+                    let vocab = settings.customVocabulary
+                    async let micWordsAsync = processor.transcribeOnly(samples: filteredMic, vocabulary: vocab)
+                    async let sysWordsAsync = processor.transcribeOnly(samples: filteredSystem, vocabulary: vocab)
+                    var micWords = try await micWordsAsync
+                    var sysWords = try await sysWordsAsync
+
+                    // Label by source
+                    for i in micWords.indices { micWords[i].isLocalSpeaker = true }
+                    for i in sysWords.indices { sysWords[i].isLocalSpeaker = false }
+
+                    // Merge by timestamp
+                    let merged = (micWords + sysWords).sorted { $0.start < $1.start }
+                    Self.logger.info("Dual-stream: \(micWords.count) mic words + \(sysWords.count) system words = \(merged.count) total")
+
+                    if !merged.isEmpty {
+                        meeting.rawTranscript = merged
+                        Self.logger.info("Dual-stream transcription replaced output with \(merged.count) words")
+                    }
+                } else {
+                    // Fallback: single stream (mic-only or system-only)
+                    Self.logger.info("Single-stream batch with \(filteredCombined.count) samples")
+                    let batchWords = try await processor.process(
+                        samples: filteredCombined,
+                        systemSamples: filteredSystem,
+                        enableDiarization: enableDiarization,
+                        vocabulary: settings.customVocabulary
+                    )
+                    if !batchWords.isEmpty {
                     var tagged = batchWords
                     let startTime = sourceEvents.first?.timestamp ?? 0
                     for i in tagged.indices {
@@ -45,31 +129,81 @@ final class PostProcessingService {
                     }
                     meeting.rawTranscript = tagged
                     Self.logger.info("Batch transcription replaced stream output with \(tagged.count) words")
+                    }
                 }
             } else if useGraniteBatch {
-                Self.logger.info("Running Granite Speech batch transcription with \(combinedSamples.count) samples")
-                let engine = GraniteSpeechEngine()
-                let audioStream = AsyncStream<AudioChunk> { continuation in
-                    // Feed all samples as one chunk
-                    continuation.yield(AudioChunk(samples: combinedSamples, sampleRate: 16000, timestamp: 0, source: .mic))
-                    continuation.finish()
-                }
-                var batchWords: [TranscriptWord] = []
-                for await word in engine.transcribe(audioStream: audioStream) {
-                    batchWords.append(word)
-                }
-                if !batchWords.isEmpty {
-                    // Tag with local speaker info from RMS events
-                    let startTime = sourceEvents.first?.timestamp ?? 0
-                    for i in batchWords.indices {
-                        batchWords[i].isLocalSpeaker = Self.resolveLocalSpeaker(
-                            wordStart: startTime + batchWords[i].start,
-                            wordEnd: startTime + batchWords[i].end,
-                            sourceEvents: sourceEvents
-                        )
+                // === DUAL-STREAM: Transcribe mic and system audio SEPARATELY ===
+                if !filteredMic.isEmpty && !filteredSystem.isEmpty {
+                    Self.logger.info("Granite dual-stream transcription: mic=\(filteredMic.count) system=\(filteredSystem.count)")
+
+                    let micEngine = GraniteSpeechEngine()
+                    let sysEngine = GraniteSpeechEngine()
+
+                    let micStream = AsyncStream<AudioChunk> { continuation in
+                        continuation.yield(AudioChunk(samples: filteredMic, sampleRate: 16000, timestamp: 0, source: .mic))
+                        continuation.finish()
                     }
-                    meeting.rawTranscript = batchWords
-                    Self.logger.info("Granite batch transcription produced \(batchWords.count) words")
+                    let sysStream = AsyncStream<AudioChunk> { continuation in
+                        continuation.yield(AudioChunk(samples: filteredSystem, sampleRate: 16000, timestamp: 0, source: .system))
+                        continuation.finish()
+                    }
+
+                    // Transcribe each stream independently
+                    async let micWordsAsync = { () async -> [TranscriptWord] in
+                        var words: [TranscriptWord] = []
+                        for await word in micEngine.transcribe(audioStream: micStream) {
+                            words.append(word)
+                        }
+                        return words
+                    }()
+                    async let sysWordsAsync = { () async -> [TranscriptWord] in
+                        var words: [TranscriptWord] = []
+                        for await word in sysEngine.transcribe(audioStream: sysStream) {
+                            words.append(word)
+                        }
+                        return words
+                    }()
+
+                    var micWords = await micWordsAsync
+                    var sysWords = await sysWordsAsync
+
+                    // Label by source
+                    for i in micWords.indices { micWords[i].isLocalSpeaker = true }
+                    for i in sysWords.indices { sysWords[i].isLocalSpeaker = false }
+
+                    // Merge by timestamp
+                    let merged = (micWords + sysWords).sorted { $0.start < $1.start }
+                    Self.logger.info("Granite dual-stream: \(micWords.count) mic words + \(sysWords.count) system words = \(merged.count) total")
+
+                    if !merged.isEmpty {
+                        meeting.rawTranscript = merged
+                        Self.logger.info("Granite dual-stream transcription replaced output with \(merged.count) words")
+                    }
+                } else {
+                    // Fallback: single stream (mic-only or system-only)
+                    Self.logger.info("Running Granite Speech single-stream batch transcription with \(filteredCombined.count) samples")
+                    let engine = GraniteSpeechEngine()
+                    let audioStream = AsyncStream<AudioChunk> { continuation in
+                        continuation.yield(AudioChunk(samples: filteredCombined, sampleRate: 16000, timestamp: 0, source: .mic))
+                        continuation.finish()
+                    }
+                    var batchWords: [TranscriptWord] = []
+                    for await word in engine.transcribe(audioStream: audioStream) {
+                        batchWords.append(word)
+                    }
+                    if !batchWords.isEmpty {
+                        // Tag with local speaker info from RMS events
+                        let startTime = sourceEvents.first?.timestamp ?? 0
+                        for i in batchWords.indices {
+                            batchWords[i].isLocalSpeaker = Self.resolveLocalSpeaker(
+                                wordStart: startTime + batchWords[i].start,
+                                wordEnd: startTime + batchWords[i].end,
+                                sourceEvents: sourceEvents
+                            )
+                        }
+                        meeting.rawTranscript = batchWords
+                        Self.logger.info("Granite batch transcription produced \(batchWords.count) words")
+                    }
                 }
             }
 
